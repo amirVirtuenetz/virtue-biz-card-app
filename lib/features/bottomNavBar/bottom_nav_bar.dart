@@ -4,7 +4,8 @@ import 'package:biz_card/features/screens/biz_card.dart';
 import 'package:flutter/material.dart';
 
 import '../qrCode_scan/qr_image_scan.dart';
-import '../setting/setting_screen.dart';
+import '../setting/screens/setting_screen.dart';
+import '../shareQrCode/share_qr_code_screen.dart';
 
 class BottomNavBar extends StatefulWidget {
   const BottomNavBar({Key? key}) : super(key: key);
@@ -115,7 +116,13 @@ class _BottomNavBarState extends State<BottomNavBar> {
         width: 70.0,
         child: FittedBox(
           child: FloatingActionButton(
-            onPressed: () {},
+            onPressed: () {
+              Navigator.of(context).push(
+                MaterialPageRoute(
+                  builder: (context) => const ShareQRCodeScreen(),
+                ),
+              );
+            },
             elevation: 0.0,
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(100),

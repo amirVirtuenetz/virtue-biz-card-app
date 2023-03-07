@@ -39,7 +39,7 @@ bool isLandscape(BuildContext context) =>
     MediaQuery.of(context).orientation == Orientation.landscape;
 
 /// drop down text style
-TextStyle dropDownTextStyle = TextStyle(
+TextStyle dropDownTextStyle = const TextStyle(
     overflow: TextOverflow.ellipsis,
     //te
     // color: AppColors.tertiaryTextColor, //Font color

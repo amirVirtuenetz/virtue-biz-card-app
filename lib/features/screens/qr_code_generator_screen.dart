@@ -24,9 +24,6 @@ class QRGeneratorScreenState extends State<QRGeneratorScreen> {
   static const double _topSectionHeight = 50.0;
 
   GlobalKey globalKey = GlobalKey();
-  final String _dataString = "Hello from this QR";
-  String _inputErrorText = '';
-  final TextEditingController _textController = TextEditingController();
 
   @override
   Widget build(BuildContext context) {

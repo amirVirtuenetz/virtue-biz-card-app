@@ -8,6 +8,7 @@ class AppTextButton extends StatelessWidget {
   final double? elevation;
   final bool? isImageIcon;
   final String? imageIcon;
+  final Size? size;
   const AppTextButton(
       {Key? key,
       required this.onPressed,
@@ -16,7 +17,8 @@ class AppTextButton extends StatelessWidget {
       this.backgroundColor,
       this.elevation,
       this.isImageIcon = false,
-      this.imageIcon})
+      this.imageIcon,
+      this.size})
       : super(key: key);
 
   @override
@@ -29,8 +31,8 @@ class AppTextButton extends StatelessWidget {
         foregroundColor: Colors.black,
         surfaceTintColor: Colors.white,
         elevation: elevation ?? 4,
-        maximumSize: const Size(double.infinity, 60),
-        minimumSize: const Size(double.infinity, 60),
+        maximumSize: size ?? const Size(double.infinity, 60),
+        minimumSize: size ?? const Size(double.infinity, 60),
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(30),
         ),
