@@ -1,15 +1,24 @@
 import 'dart:developer';
 
+import 'package:biz_card/features/model/user_model.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_easyloading/flutter_easyloading.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 
 import '../../core/helpers/alert_message.dart';
+import '../../core/helpers/auth_enum.dart';
 import '../../core/helpers/key_constant.dart';
 import '../services/firebase_services.dart';
 import '../services/shared_preference.dart';
 
+// Now This Class Contains 4 Functions currently
+// 1. signInWithGoogle
+// 2. signOut
+// 3. signInWithEmailAndPassword
+// 4. signUpWithEmailAndPassword
+//  All these functions are async because this involves a future.
+//  if async keyword is not used, it will throw an error.
 class Authentication {
   // For Authentication related functions you need an instance of FirebaseAuth
   final FirebaseAuth _auth = FirebaseAuth.instance;
@@ -33,7 +42,10 @@ class Authentication {
   final TextEditingController signUpConfirmPasswordController =
       TextEditingController();
 
-  /// sign Up Form bool check varibale
+  /// user model
+  UserDataModel userModel = UserDataModel();
+
+  /// sign Up Form bool check variable
   bool isSignUpNameError = false;
   bool isSignUpEmailError = false;
   bool isSignUpPasswordError = false;
@@ -44,13 +56,12 @@ class Authentication {
   bool isPasswordError = false;
   String loginEmailErrorText = '';
   String loginPasswordErrorText = '';
-  // Now This Class Contains 4 Functions currently
-  // 1. signInWithGoogle
-  // 2. signOut
-  // 3. signInWithEmailAndPassword
-  // 4. signUpWithEmailAndPassword
-  //  All these functions are async because this involves a future.
-  //  if async keyword is not used, it will throw an error.
+
+  /// declare variable for updating user profile data
+
+  String coverImage = '';
+  String profileImage = '';
+  String logoImage = '';
 
   ///sign in function
   Future<dynamic> signInWithEmailAndPassword({
@@ -189,9 +200,22 @@ class Authentication {
           'emailVerified': currentUser?.emailVerified,
           'creationTime': currentUser?.metadata.creationTime.toString(),
           'lastSignInTime': currentUser?.metadata.lastSignInTime.toString(),
-          'created': DateTime.now(),
+          'created': DateTime.now().toIso8601String(),
           'updated': '',
-          'isDeleted': 0
+          'isDeleted': 0,
+          'instagram': '',
+          'website': '',
+          'contactCard': '',
+          "qrCode": '',
+          "coverURL": '',
+          "logoURL": '',
+          "jobTitle": '',
+          "companyName": '',
+          "address": '',
+          "bio": '',
+          "brandColor": '',
+          "cardTitle": '',
+          "linkedIn": ''
         };
         await FirebaseServices.addData('users', currentUser?.uid, userInfo);
         signUpNameController.clear();
@@ -221,7 +245,6 @@ class Authentication {
             // _isSignUpEmailErrorText = "This email already exist";
             AlertMessage.showMessage(context, 'This email already exist');
             EasyLoading.dismiss();
-            // notifyListeners();
             break;
         }
       }
@@ -241,7 +264,21 @@ class Authentication {
       'phoneNumber': currentUser?.phoneNumber,
       'photoURL': currentUser?.photoURL,
       'uid': currentUser?.uid,
-      'refreshToken': currentUser?.refreshToken
+      'refreshToken': currentUser?.refreshToken,
+      'isDeleted': 0,
+      'instagram': '',
+      'website': '',
+      'contactCard': '',
+      "qrCode": '',
+      "coverURL": '',
+      "logoURL": '',
+      "jobTitle": '',
+      "companyName": '',
+      "address": '',
+      "bio": '',
+      "brandColor": '',
+      "cardTitle": '',
+      "linkedIn": ''
     }).then((value) {
       log("Current Anonymous User Detail has been saved in Locally");
     }).catchError((e) {
@@ -255,6 +292,97 @@ class Authentication {
     });
   }
 
+  Future<void> getDataFromFireStore() async {
+    await FirebaseServices.readDocumentData("users", _auth.currentUser!.uid)
+        .then((value) {
+      log("Successfully read current user data : $value");
+      userModel = UserDataModel.fromJson(value!);
+      log("After Assign to UserDataModel,  read current user data : ${userModel.email}");
+    }).catchError((e) {
+      log("getDataFromFireStore error: $e");
+    });
+  }
+
+  /// add data to firebase
+  Future<void> addToFirebaseData(var currentUserInstance) async {
+    var currentUser = currentUserInstance;
+    Map<String, dynamic> userInfo = {
+      'displayName': currentUser?.displayName,
+      'email': currentUser?.email,
+      'phoneNumber': currentUser?.providerData[0].phoneNumber,
+      'photoURL': currentUser?.providerData[0].photoURL,
+      'providedId': currentUser?.providerData[0].providerId,
+      'uid': currentUser?.uid,
+      'emailVerified': currentUser?.emailVerified,
+      'creationTime': currentUser?.metadata.creationTime.toIso8601String(),
+      'lastSignInTime': currentUser?.metadata.lastSignInTime.toIso8601String(),
+      'created': DateTime.now().toIso8601String(),
+      'updated': '',
+      'isDeleted': 0,
+      'instagram': '',
+      'website': '',
+      'contactCard': '',
+      "qrCode": '',
+      "coverURL": '',
+      "logoURL": '',
+      "jobTitle": '',
+      "companyName": '',
+      "address": '',
+      "bio": '',
+      "brandColor": '',
+      "cardTitle": '',
+      "linkedIn": ''
+    };
+    await FirebaseServices.addData('users', currentUser?.uid, userInfo)
+        .then((value) {
+      log("Data has been saved in FireStore Database ");
+    }).catchError((e) {
+      log("Error while saving data in FireStore Database");
+    });
+  }
+
+  /// update data to firestore and locally
+
+  uploadAndGetUrl({required var image, required ImageTypes types}) async {
+    switch (types) {
+      case ImageTypes.coverImage:
+        _getImageUrl(image).then((value) {
+          coverImage = value;
+          log("Cover Http Image Path: $coverImage");
+        }).catchError((e) {
+          log("Error while getting Cover http image path: $e");
+        });
+        break;
+      case ImageTypes.profileImage:
+        _getImageUrl(image).then((value) {
+          profileImage = value;
+          log("Profile Http Image Path: $profileImage");
+        }).catchError((e) {
+          log("Error while getting profile http image path: $e");
+        });
+        break;
+      case ImageTypes.logoImage:
+        _getImageUrl(image).then((value) {
+          logoImage = value;
+          log("Logo Http Image Path: $logoImage");
+        }).catchError((e) {
+          log("Error while getting Logo http image path: $e");
+        });
+        break;
+      default:
+        null;
+    }
+  }
+
+  Future<String> _getImageUrl(var image) async {
+    AlertMessage.showLoading();
+    var imagePath = await FirebaseServices.uploadImage(image);
+    // log("Cover Http Image Path: $coverImage");
+    AlertMessage.successMessage("Your Image has been uploaded");
+    AlertMessage.dismissLoading();
+    return imagePath;
+  }
+
   ///
   Future<void> onGoogleButtonPress(var context) async {
     await signInWithGoogle(context).then((value) async {
@@ -263,52 +391,10 @@ class Authentication {
       log("Current Google User: $currentUser");
 
       /// data saved in firebase
-      Map<String, dynamic> userInfo = {
-        'displayName': currentUser?.displayName,
-        'email': currentUser?.email,
-        'phoneNumber': currentUser?.providerData[0].phoneNumber,
-        'photoURL': currentUser?.providerData[0].photoURL,
-        'providedId': currentUser?.providerData[0].providerId,
-        'uid': currentUser?.uid,
-        'emailVerified': currentUser?.emailVerified,
-        'creationTime': currentUser?.metadata.creationTime.toString(),
-        'lastSignInTime': currentUser?.metadata.lastSignInTime.toString(),
-        'created': DateTime.now(),
-        'updated': '',
-        'isDeleted': 0
-      };
-      await FirebaseServices.addData('users', currentUser?.uid, userInfo)
-          .then((value) {
-        log("Data has been saved in FireStore Database");
-      }).catchError((e) {
-        log("Error while saving data in FireStore Database");
-      });
+      await addToFirebaseData(currentUser);
 
       /// data saved in shared preferences
-      pref.storeStringData(UsersKey.currentUserKey, currentUser?.uid);
-      pref.storeObjectData(UsersKey.randomUserKey, {
-        'displayName': currentUser?.displayName,
-        'email': currentUser?.email,
-        'emailVerified': currentUser?.emailVerified,
-        'isAnonymous': currentUser?.isAnonymous,
-        'creationTime': currentUser?.metadata.creationTime?.toIso8601String(),
-        'lastSignInTime':
-            currentUser?.metadata.lastSignInTime?.toIso8601String(),
-        'phoneNumber': currentUser?.phoneNumber,
-        'photoURL': currentUser?.photoURL,
-        'uid': currentUser?.uid,
-        'refreshToken': currentUser?.refreshToken
-      }).then((value) {
-        log("Current Google User Detail has been saved in Locally");
-      }).catchError((e) {
-        // EasyLoading.dismiss();
-        log("Error while saving Anonymous User Detail in Locally $e");
-      });
-
-      ///
-      pref.getStringData(UsersKey.currentUserKey).then((value) {
-        log("saved it current  userID: $value");
-      });
+      saveDataLocally(currentUser);
     }).catchError((e) {
       log("Google Sign in error : $e");
     });
@@ -352,7 +438,7 @@ class Authentication {
         return false;
       }
     } catch (e) {
-      log("Firebase error: ${e}");
+      log("Firebase error: $e");
       return true;
     }
   }

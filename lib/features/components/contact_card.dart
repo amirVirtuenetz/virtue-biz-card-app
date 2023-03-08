@@ -1,3 +1,4 @@
+import 'package:biz_card/core/helpers/app_colors.dart';
 import 'package:flutter/material.dart';
 
 class SocialContactCard extends StatelessWidget {
@@ -14,29 +15,29 @@ class SocialContactCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return ListTile(
-      horizontalTitleGap: 5,
+      horizontalTitleGap: 15,
       // minLeadingWidth: 10,
       onTap: onPressed,
-      contentPadding: const EdgeInsets.symmetric(vertical: 5),
+      contentPadding: const EdgeInsets.symmetric(vertical: 4),
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(12),
       ),
-      tileColor: Colors.indigoAccent,
-      textColor: Colors.white,
-      iconColor: Colors.white,
+      tileColor: AppColor.primaryBackgroundColor,
+      // textColor: Colors.white,
+      // iconColor: Colors.white,
       leading: Transform.translate(
         offset: const Offset(15, 0),
         child: Icon(leadingIcon),
       ),
       title: Text(
         title,
-        style: TextStyle(
+        style: const TextStyle(
           fontSize: 16,
           fontWeight: FontWeight.w700,
         ),
       ),
       trailing: Padding(
-        padding: EdgeInsets.only(right: 10),
+        padding: const EdgeInsets.only(right: 10),
         child: SizedBox(
           width: 50,
           height: 35,

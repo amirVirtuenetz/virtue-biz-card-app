@@ -15,6 +15,10 @@ class AlertMessage {
     EasyLoading.showToast(message);
   }
 
+  static showLoading() {
+    EasyLoading.show();
+  }
+
   static dismissLoading() {
     EasyLoading.dismiss();
   }

@@ -1,4 +1,6 @@
+import 'dart:async';
 import 'dart:developer';
+import 'dart:io';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -100,8 +102,8 @@ class FirebaseServices {
     // await _firestore.collection(collectionName).doc(documentId).set(data);
   }
 
-  static fetchSubCollectionData(String collectionName, String id,
-      String subCollectionName, Map<String, dynamic> data) async {
+  static fetchSubCollectionData(
+      String collectionName, String id, String subCollectionName) async {
     var list;
     await _firestore
         .collection(collectionName)
@@ -135,24 +137,23 @@ class FirebaseServices {
         .doc(id)
         .update(data)
         .catchError((e) {
-      print(e);
+      log(e);
     });
     return;
   }
 
-  static Future<void> deleteTask(String collectionRef, String id) async {
+  static Future<void> deleteData(String collectionRef, String id) async {
     await _firestore.collection(collectionRef).doc(id).delete().catchError((e) {
       print(e);
     });
     return;
   }
 
-  static Future<void> addNewUser(Map<String, dynamic> user) async {
-    await _firestore.collection('signup-user').doc().set(user);
-  }
+  // static Future<void> addNewUser(Map<String, dynamic> user) async {
+  //   await _firestore.collection('signup-user').doc().set(user);
+  // }
 
-  static Future<String> fetchUserData(
-      String collectionName, String id, Map<String, dynamic> data) async {
+  static Future<String> fetchUserData(String collectionName, String id) async {
     var list;
     await _firestore.collection(collectionName).doc(id).get().then((value) => {
           if (value.exists) {list = value.data()}
@@ -180,19 +181,31 @@ class FirebaseServices {
   }
 
   static Future<String> uploadImage(var image) async {
-    final FirebaseStorage firebaseStorage = FirebaseStorage.instance;
-    var fileName = image.path.split('/').last;
-    log('file name: $fileName');
-    final metadata = SettableMetadata(contentType: "image/jpeg");
-    var snapshot = await firebaseStorage
-        .ref()
-        .child('images/$fileName')
-        .putFile(image, metadata)
-        .whenComplete(() {
-      log("image uploaded: ");
-    });
-    var downloadUrl = await snapshot.ref.getDownloadURL();
-    return downloadUrl;
+    String url = '';
+    try {
+      final FirebaseStorage firebaseStorage = FirebaseStorage.instance;
+      var fileName = image.path.split('/').last;
+      log('file name: $fileName');
+      final metadata = SettableMetadata(contentType: "image/jpeg");
+
+      var snapshot = await firebaseStorage
+          .ref()
+          .child(
+              'images/${"VirtueBizz"}-${DateTime.now().toIso8601String()}-$fileName')
+          .putFile(image, metadata)
+          .whenComplete(() {
+        log("image uploaded: ");
+      });
+      var downloadUrl = await snapshot.ref.getDownloadURL();
+      url = downloadUrl;
+    } on FirebaseStorage catch (e) {
+      log("FirebaseStorage Exception :$e");
+    } on HttpException catch (e) {
+      log("HttpException Exception :$e");
+    } on TimeoutException catch (e) {
+      log("TimeoutException  :$e");
+    }
+    return url;
   }
 }
 

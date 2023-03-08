@@ -1,0 +1,256 @@
+import 'dart:developer';
+import 'dart:io';
+
+import 'package:biz_card/features/model/user_model.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter/material.dart';
+import 'package:hooks_riverpod/hooks_riverpod.dart';
+import 'package:image_picker/image_picker.dart';
+
+import '../../core/helpers/alert_message.dart';
+import '../../core/helpers/auth_enum.dart';
+import '../../core/helpers/key_constant.dart';
+import '../services/firebase_services.dart';
+import '../services/shared_preference.dart';
+
+class BoolProvider extends StateNotifier<bool> {
+  BoolProvider({getbool = false}) : super(getbool);
+  void boolProviderStatus(value) {
+    state = value;
+  }
+}
+
+class UserModule {
+  final FirebaseAuth _auth = FirebaseAuth.instance;
+  final SharePreferencesClass pref = SharePreferencesClass();
+
+  var newSwitch =
+      StateNotifierProvider<BoolProvider, bool>((ref) => BoolProvider());
+
+  Stream<User?> get authStateChange => _auth.authStateChanges();
+
+  /// textEditingController
+  final TextEditingController cardTitleController = TextEditingController();
+  final TextEditingController nameController = TextEditingController();
+  final TextEditingController jobTitleController = TextEditingController();
+  final TextEditingController companyController = TextEditingController();
+  final TextEditingController addressController = TextEditingController();
+  final TextEditingController bioController = TextEditingController();
+
+  /// user data model
+  UserDataModel userModel = UserDataModel();
+
+  /// image picker
+  ImagePicker picker = ImagePicker();
+
+  /// images instance
+  File? coverImage;
+  File? profileImage;
+  File? logoImage;
+
+  /// declare variable for updating user profile data
+
+  String coverImageString = '';
+  String profileImageString = '';
+  String logoImageString = '';
+
+  String brandColor = "000000";
+
+  /// list of colors
+  final List<Color> colors = <Color>[
+    const Color(0XFFFFFFFF),
+    Colors.black,
+    Colors.blue,
+    // Colors.red,
+    Colors.redAccent,
+    const Color(0XFF3E54AC),
+    // const Color(0XFFECF2FF),
+    const Color(0XFF181823),
+    const Color(0XFF18122B),
+    // const Color(0XFF03001C),
+  ];
+
+  /// switch instance
+  bool _switchValue = false;
+  bool loading = false;
+  bool get switchValue => _switchValue;
+  set switchValue(bool newval) {
+    _switchValue = newval;
+  }
+
+  void saveDataLocally(var currentUserInstance) {
+    var currentUser = currentUserInstance;
+    pref.storeStringData(UsersKey.currentUserKey, currentUser?.uid);
+    pref.storeObjectData(UsersKey.randomUserKey, {
+      'displayName': currentUser?.displayName,
+      'email': currentUser?.email,
+      'emailVerified': currentUser?.emailVerified,
+      'isAnonymous': currentUser?.isAnonymous,
+      'creationTime': currentUser?.metadata.creationTime?.toIso8601String(),
+      'lastSignInTime': currentUser?.metadata.lastSignInTime?.toIso8601String(),
+      'phoneNumber': currentUser?.phoneNumber,
+      'photoURL': currentUser?.photoURL,
+      'uid': currentUser?.uid,
+      'refreshToken': currentUser?.refreshToken,
+      'isDeleted': 0,
+      'instagram': '',
+      'website': '',
+      'contactCard': '',
+      "qrCode": '',
+      "coverURL": '',
+      "logoURL": '',
+      "jobTitle": '',
+      "companyName": '',
+      "address": '',
+      "bio": '',
+      "brandColor": '',
+      "cardTitle": '',
+      "linkedIn": '',
+    }).then((value) {
+      log("Current Anonymous User Detail has been saved in Locally");
+    }).catchError((e) {
+      // EasyLoading.dismiss();
+      log("Error while saving Anonymous User Detail in Locally $e");
+    });
+
+    ///
+    pref.getStringData(UsersKey.currentUserKey).then((value) {
+      log("saved it current  userID: $value");
+    });
+  }
+
+  /// end save data locally
+  /// get data from fireStore database
+  Future<void> getDataFromFireStore() async {
+    await FirebaseServices.readDocumentData("users", _auth.currentUser!.uid)
+        .then((value) {
+      log("Successfully read current user data : $value");
+      userModel = UserDataModel.fromJson(value!);
+      log("After Assign to UserDataModel,  read current user data : ${userModel.cardTitle}");
+    }).catchError((e) {
+      log("getDataFromFireStore error: $e");
+    });
+  }
+
+  Future<void> updateUserData() async {
+    var currentUser = _auth.currentUser;
+    AlertMessage.showLoading();
+    Map<String, dynamic> userInfo = {
+      'displayName': nameController.text,
+      // 'email': userModel.email.toString(),
+      // 'phoneNumber': currentUser?.providerData[0].phoneNumber,
+      // 'photoURL': profileImageString,
+      // 'providedId': currentUser?.providerData[0].providerId,
+      'uid': currentUser?.uid,
+      // 'emailVerified': currentUser?.emailVerified,
+      // 'creationTime': currentUser?.metadata.creationTime.toString(),
+      // 'lastSignInTime': currentUser?.metadata.lastSignInTime.toString(),
+      // 'created': DateTime.now().toIso8601String(),
+      'updated': DateTime.now().toIso8601String(),
+      // 'isDeleted': 0,
+      // 'instagram': '',
+      // 'website': '',
+      // 'contactCard': '',
+      // "qrCode": '',
+      // "coverURL": coverImageString,
+      // "logoURL": logoImageString,
+      "jobTitle": jobTitleController.text,
+      "companyName": companyController.text,
+      "address": addressController.text,
+      "bio": bioController.text,
+      // "brandColor": '',
+      "cardTitle": cardTitleController.text
+    };
+    await FirebaseServices.updateData('users', currentUser?.uid, userInfo)
+        .then((value) {
+      log("Successfully updated: ");
+    }).catchError((e) {
+      log("Error while updating profile data:  $e");
+    });
+    // await FirebaseServices.addData('card', currentUser?.uid, userInfo)
+    //     .then((value) {
+    //   log("Successfully updated: ");
+    // }).catchError((e) {
+    //   log("Error while updating profile data:  $e");
+    // });
+    AlertMessage.dismissLoading();
+  }
+
+  uploadAndGetUrl({required var image, required ImageTypes types}) async {
+    var currentUser = _auth.currentUser;
+    switch (types) {
+      case ImageTypes.coverImage:
+        _getImageUrl(image).then((value) async {
+          coverImageString = value;
+          log("Cover Http Image Path: $coverImageString");
+          AlertMessage.showLoading();
+          await FirebaseServices.updateData(
+                  'users', currentUser?.uid, {"coverURL": coverImageString})
+              .then((value) {
+            AlertMessage.successMessage("Image has been updated in fireStore");
+            log("Successfully updated: ");
+          }).catchError((e) {
+            AlertMessage.dismissLoading();
+            log("Error while updating profile data:  $e");
+          });
+        }).catchError((e) {
+          log("Error while getting Cover http image path: $e");
+        });
+        break;
+      case ImageTypes.profileImage:
+        _getImageUrl(image).then((value) async {
+          profileImageString = value;
+          log("Profile Http Image Path: $profileImageString");
+          AlertMessage.showLoading();
+          await FirebaseServices.updateData(
+                  'users', currentUser?.uid, {"photoURL": profileImageString})
+              .then((value) {
+            AlertMessage.successMessage("Image has been updated in fireStore");
+            log("Successfully updated: ");
+          }).catchError((e) {
+            AlertMessage.dismissLoading();
+            log("Error while updating profile data:  $e");
+          });
+        }).catchError((e) {
+          log("Error while getting profile http image path: $e");
+        });
+        break;
+      case ImageTypes.logoImage:
+        _getImageUrl(image).then((value) async {
+          logoImageString = value;
+          log("Logo Http Image Path: $logoImageString");
+          AlertMessage.showLoading();
+          await FirebaseServices.updateData(
+                  'users', currentUser?.uid, {"logoURL": logoImageString})
+              .then((value) {
+            AlertMessage.successMessage("Image has been updated in fireStore");
+            log("Successfully updated: ");
+          }).catchError((e) {
+            AlertMessage.dismissLoading();
+            log("Error while updating profile data:  $e");
+          });
+        }).catchError((e) {
+          log("Error while getting Logo http image path: $e");
+        });
+        break;
+      default:
+        null;
+    }
+  }
+
+  Future<String> _getImageUrl(var image) async {
+    AlertMessage.showLoading();
+    var imagePath = await FirebaseServices.uploadImage(image);
+    // log("Cover Http Image Path: $coverImage");
+    AlertMessage.successMessage("Your Image has been uploaded");
+    AlertMessage.dismissLoading();
+    return imagePath;
+  }
+
+  onSaveButtonPressed() async {
+    log("save button pressed");
+    await updateUserData().then((value) async {
+      await getDataFromFireStore();
+    }).catchError((e) {});
+  }
+}

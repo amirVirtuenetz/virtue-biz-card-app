@@ -1,3 +1,4 @@
+import 'package:biz_card/core/helpers/alert_message.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
@@ -15,7 +16,7 @@ class SettingScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     // first variable is to get the data of Authenticated User
-    final data = ref.watch(fireBaseAuthProvider);
+    // final data = ref.watch(fireBaseAuthProvider);
 
     // log("Data in fireBaseAuthProvider ${data.currentUser}");
 
@@ -435,7 +436,12 @@ class SettingScreen extends ConsumerWidget {
                   child: Column(
                     children: [
                       MaterialButton(
-                        onPressed: () {},
+                        onPressed: () async {
+                          AlertMessage.showLoading();
+                          auth.signOut();
+                          auth.signOutGoogle();
+                          AlertMessage.dismissLoading();
+                        },
                         // textColor: Colors.blue.shade700,
                         elevation: 0,
                         hoverElevation: 0,

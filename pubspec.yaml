@@ -67,6 +67,7 @@ dependencies:
   flutter_share_me: ^1.4.0
   social_share: ^2.3.1
   appinio_social_share: ^0.2.0
+  cached_network_image: ^3.2.3
 #  qrscan: ^0.3.3
 
 dev_dependencies:
