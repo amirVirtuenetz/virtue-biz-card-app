@@ -1,30 +1,31 @@
+import 'dart:convert';
 import 'dart:developer';
 import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
+import 'package:url_launcher/url_launcher.dart';
 
-class BarcodeScannerWithController extends StatefulWidget {
-  const BarcodeScannerWithController({Key? key}) : super(key: key);
+class QRCodeScannerScreen extends StatefulWidget {
+  const QRCodeScannerScreen({Key? key}) : super(key: key);
 
   @override
-  _BarcodeScannerWithControllerState createState() =>
-      _BarcodeScannerWithControllerState();
+  _QRCodeScannerScreenState createState() => _QRCodeScannerScreenState();
 }
 
-class _BarcodeScannerWithControllerState
-    extends State<BarcodeScannerWithController>
+class _QRCodeScannerScreenState extends State<QRCodeScannerScreen>
     with SingleTickerProviderStateMixin {
   BarcodeCapture? barcode;
 
   final MobileScannerController controller = MobileScannerController(
-      torchEnabled: true, formats: [BarcodeFormat.qrCode]
-      // facing: CameraFacing.front,
-      // detectionSpeed: DetectionSpeed.normal
-      // detectionTimeoutMs: 1000,
-      // returnImage: false,
-      );
+    torchEnabled: false, formats: [BarcodeFormat.all],
+
+    // facing: CameraFacing.front,
+    // detectionSpeed: DetectionSpeed.normal
+    // detectionTimeoutMs: 1000,
+    // returnImage: false,
+  );
   File? qrImage;
   bool isStarted = true;
 
@@ -49,30 +50,51 @@ class _BarcodeScannerWithControllerState
   }
 
   void pickImageFromGallery() async {
-    final ImagePicker picker = ImagePicker();
-    final XFile? image = await picker.pickImage(
-      source: ImageSource.gallery,
-    );
-    if (image != null) {
-      if (await controller.analyzeImage(image.path)) {
-        qrImage = File(image.path);
-        log(" qrImage =${qrImage}");
-        if (!mounted) return;
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('QR Code Found!'),
-            backgroundColor: Colors.green,
-          ),
-        );
-      } else {
-        if (!mounted) return;
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('No qrcode found!'),
-            backgroundColor: Colors.red,
-          ),
-        );
+    try {
+      final ImagePicker picker = ImagePicker();
+      final XFile? image = await picker.pickImage(
+        source: ImageSource.gallery,
+      );
+      if (image != null) {
+        // launchInBrowser(Uri.parse("https://www.google.com"));
+        log("Image  abs: ${image.path}");
+        if (await controller.analyzeImage(image.path)) {
+          setState(() {
+            qrImage = File(image.path);
+          });
+          log(" qrImage =$qrImage");
+          if (!mounted) return;
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('QR Code Found!'),
+              backgroundColor: Colors.green,
+            ),
+          );
+        } else {
+          if (!mounted) return;
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('No qrcode found!'),
+              backgroundColor: Colors.red,
+            ),
+          );
+        }
       }
+    } catch (e) {
+      log("QR Scan Error ${e}");
+    }
+  }
+
+  Future<void> launchInBrowser(Uri url) async {
+    if (await canLaunchUrl(
+      url,
+    )) {
+      await launchUrl(
+        url,
+        mode: LaunchMode.externalApplication,
+      );
+    } else {
+      throw Exception('Could not launch $url');
     }
   }
 
@@ -92,11 +114,16 @@ class _BarcodeScannerWithControllerState
                   );
                 },
                 fit: BoxFit.cover,
-                onDetect: (barcode) {
+                onDetect: (barcode) async {
                   setState(() {
                     this.barcode = barcode;
                     log("Bar Code Detail: ${barcode.barcodes.first.rawValue}");
                   });
+                  Map<String, dynamic> jsonMap =
+                      jsonDecode("${barcode.barcodes.first.rawValue}");
+                  // barcode.barcodes.first.rawBytes.toString()
+                  print("Link url : ${jsonMap['profileLink']}");
+                  launchInBrowser(Uri.parse(jsonMap['profileLink']));
                 },
               ),
               Positioned(

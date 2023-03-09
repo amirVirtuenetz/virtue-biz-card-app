@@ -35,6 +35,7 @@ class UserDataModel {
     this.updated,
     this.email,
     this.cardTitle,
+    this.profileLink,
   });
 
   String? website;
@@ -43,7 +44,7 @@ class UserDataModel {
   String? providedId;
   DateTime? creationTime;
   String? displayName;
-  String? created;
+  DateTime? created;
   String? jobTitle;
   String? companyName;
   String? bio;
@@ -61,6 +62,7 @@ class UserDataModel {
   String? updated;
   String? email;
   String? cardTitle;
+  String? profileLink;
 
   factory UserDataModel.fromJson(Map<String, dynamic> json) => UserDataModel(
         website: json["website"],
@@ -71,7 +73,8 @@ class UserDataModel {
             ? null
             : DateTime.parse(json["creationTime"]),
         displayName: json["displayName"],
-        created: json["created"],
+        created:
+            json["created"] == null ? null : DateTime.parse(json["created"]),
         jobTitle: json["jobTitle"],
         companyName: json["companyName"],
         bio: json["bio"],
@@ -91,6 +94,7 @@ class UserDataModel {
         updated: json["updated"],
         email: json["email"],
         cardTitle: json["cardTitle"],
+        profileLink: json["profileLink"],
       );
 
   Map<String, dynamic> toJson() => {
@@ -100,7 +104,7 @@ class UserDataModel {
         "providedId": providedId,
         "creationTime": creationTime?.toIso8601String(),
         "displayName": displayName,
-        "created": created,
+        "created": created?.toIso8601String(),
         "jobTitle": jobTitle,
         "companyName": companyName,
         "bio": bio,
@@ -118,5 +122,6 @@ class UserDataModel {
         "updated": updated,
         "email": email,
         "cardTitle": cardTitle,
+        "profileLink": profileLink,
       };
 }

@@ -6,19 +6,20 @@ QrCodeData qrCodeDataFromJson(String str) =>
 String qrCodeDataToJson(QrCodeData data) => json.encode(data.toJson());
 
 class QrCodeData {
-  QrCodeData({
-    this.name,
-    this.jobTitle,
-    this.company,
-    this.address,
-    this.bio,
-  });
+  QrCodeData(
+      {this.name,
+      this.jobTitle,
+      this.company,
+      this.address,
+      this.bio,
+      this.link});
 
   String? name;
   String? jobTitle;
   String? company;
   String? address;
   String? bio;
+  String? link;
 
   factory QrCodeData.fromJson(Map<String, dynamic> json) => QrCodeData(
         name: json["name"],
@@ -26,6 +27,7 @@ class QrCodeData {
         company: json["company"],
         address: json["address"],
         bio: json["bio"],
+        link: json['link'],
       );
 
   Map<String, dynamic> toJson() => {
@@ -34,5 +36,6 @@ class QrCodeData {
         "company": company,
         "address": address,
         "bio": bio,
+        "link": link
       };
 }

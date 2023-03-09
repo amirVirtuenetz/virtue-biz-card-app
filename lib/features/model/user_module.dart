@@ -2,6 +2,7 @@ import 'dart:developer';
 import 'dart:io';
 
 import 'package:biz_card/features/model/user_model.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
@@ -12,6 +13,7 @@ import '../../core/helpers/auth_enum.dart';
 import '../../core/helpers/key_constant.dart';
 import '../services/firebase_services.dart';
 import '../services/shared_preference.dart';
+import '../shareQrCode/share_qr_code_screen.dart';
 
 class BoolProvider extends StateNotifier<bool> {
   BoolProvider({getbool = false}) : super(getbool);
@@ -78,6 +80,32 @@ class UserModule {
     _switchValue = newval;
   }
 
+  /// get list of data from fire store firebase
+  Stream<DocumentSnapshot<Map<String, dynamic>>> getListData() {
+    // var data = FirebaseServices.getDocumentStream(_auth.currentUser?.uid);
+    // log("Stream Data: ${data}");
+    return FirebaseServices.getDocumentStream(_auth.currentUser?.uid);
+    // FirebaseFirestore.instance
+    //   .collection('users')
+    //   .doc(userModel.uid)
+    //   .snapshots();
+  }
+
+  /// get subCollection   data from fire store firebase
+  getSubCollectionData() {
+    // var data = FirebaseServices.getDocumentStream(_auth.currentUser?.uid);
+    var data = FirebaseServices.fetchSubCollectionData(
+        collectionName: "users",
+        id: _auth.currentUser!.uid,
+        subCollectionName: UsersKey.subCollection);
+    // log("subCollection Functions : ${data}");
+    return data;
+    // FirebaseFirestore.instance
+    //   .collection('users')
+    //   .doc(userModel.uid)
+    //   .snapshots();
+  }
+
   void saveDataLocally(var currentUserInstance) {
     var currentUser = currentUserInstance;
     pref.storeStringData(UsersKey.currentUserKey, currentUser?.uid);
@@ -106,6 +134,7 @@ class UserModule {
       "brandColor": '',
       "cardTitle": '',
       "linkedIn": '',
+      'profileLink': ''
     }).then((value) {
       log("Current Anonymous User Detail has been saved in Locally");
     }).catchError((e) {
@@ -180,58 +209,76 @@ class UserModule {
     var currentUser = _auth.currentUser;
     switch (types) {
       case ImageTypes.coverImage:
-        _getImageUrl(image).then((value) async {
-          coverImageString = value;
-          log("Cover Http Image Path: $coverImageString");
-          AlertMessage.showLoading();
-          await FirebaseServices.updateData(
-                  'users', currentUser?.uid, {"coverURL": coverImageString})
-              .then((value) {
-            AlertMessage.successMessage("Image has been updated in fireStore");
-            log("Successfully updated: ");
+        if (image != null) {
+          _getImageUrl(image).then((value) async {
+            coverImageString = value;
+            log("Cover Http Image Path: $coverImageString");
+            AlertMessage.showLoading();
+            await FirebaseServices.updateData(
+                    'users', currentUser?.uid, {"coverURL": coverImageString})
+                .then((value) {
+              AlertMessage.successMessage(
+                  "Image has been updated in fireStore");
+              log("Successfully updated: ");
+            }).catchError((e) {
+              AlertMessage.dismissLoading();
+              log("Error while updating profile data:  $e");
+            });
           }).catchError((e) {
-            AlertMessage.dismissLoading();
-            log("Error while updating profile data:  $e");
+            log("Error while getting Cover http image path: $e");
           });
-        }).catchError((e) {
-          log("Error while getting Cover http image path: $e");
-        });
+        } else {
+          log("No Cover Image selected");
+        }
+
         break;
       case ImageTypes.profileImage:
-        _getImageUrl(image).then((value) async {
-          profileImageString = value;
-          log("Profile Http Image Path: $profileImageString");
-          AlertMessage.showLoading();
-          await FirebaseServices.updateData(
-                  'users', currentUser?.uid, {"photoURL": profileImageString})
-              .then((value) {
-            AlertMessage.successMessage("Image has been updated in fireStore");
-            log("Successfully updated: ");
+        if (image != null) {
+          _getImageUrl(image).then((value) async {
+            profileImageString = value;
+            log("Profile Http Image Path: $profileImageString");
+            AlertMessage.showLoading();
+            await FirebaseServices.updateData(
+                    'users', currentUser?.uid, {"photoURL": profileImageString})
+                .then((value) {
+              AlertMessage.successMessage(
+                  "Image has been updated in fireStore");
+              log("Successfully updated: ");
+            }).catchError((e) {
+              AlertMessage.dismissLoading();
+              log("Error while updating profile data:  $e");
+            });
           }).catchError((e) {
-            AlertMessage.dismissLoading();
-            log("Error while updating profile data:  $e");
+            log("Error while getting profile http image path: $e");
           });
-        }).catchError((e) {
-          log("Error while getting profile http image path: $e");
-        });
+        } else {
+          log("No Profile Image selected");
+        }
+
         break;
       case ImageTypes.logoImage:
-        _getImageUrl(image).then((value) async {
-          logoImageString = value;
-          log("Logo Http Image Path: $logoImageString");
-          AlertMessage.showLoading();
-          await FirebaseServices.updateData(
-                  'users', currentUser?.uid, {"logoURL": logoImageString})
-              .then((value) {
-            AlertMessage.successMessage("Image has been updated in fireStore");
-            log("Successfully updated: ");
+        if (image != null) {
+          _getImageUrl(image).then((value) async {
+            logoImageString = value;
+            log("Logo Http Image Path: $logoImageString");
+            AlertMessage.showLoading();
+            await FirebaseServices.updateData(
+                    'users', currentUser?.uid, {"logoURL": logoImageString})
+                .then((value) {
+              AlertMessage.successMessage(
+                  "Image has been updated in fireStore");
+              log("Successfully updated: ");
+            }).catchError((e) {
+              AlertMessage.dismissLoading();
+              log("Error while updating profile data:  $e");
+            });
           }).catchError((e) {
-            AlertMessage.dismissLoading();
-            log("Error while updating profile data:  $e");
+            log("Error while getting Logo http image path: $e");
           });
-        }).catchError((e) {
-          log("Error while getting Logo http image path: $e");
-        });
+        } else {
+          log("No Logo image selected");
+        }
+
         break;
       default:
         null;
@@ -247,10 +294,16 @@ class UserModule {
     return imagePath;
   }
 
-  onSaveButtonPressed() async {
+  onSaveButtonPressed(var context) async {
     log("save button pressed");
     await updateUserData().then((value) async {
       await getDataFromFireStore();
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (context) => ShareQRCodeScreen(),
+        ),
+      );
     }).catchError((e) {});
   }
 }

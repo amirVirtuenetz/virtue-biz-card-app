@@ -96,14 +96,19 @@ class FirebaseServices {
     await _firestore
         .collection(collectionName)
         .doc(documentId)
-        .collection(UsersKey.userImageSubCollection)
+        .collection(UsersKey.subCollection)
         .doc()
-        .set(data);
+        .set(data)
+        .then((value) {
+      log("Data added to subCollection : ");
+    });
     // await _firestore.collection(collectionName).doc(documentId).set(data);
   }
 
   static fetchSubCollectionData(
-      String collectionName, String id, String subCollectionName) async {
+      {required String collectionName,
+      required String id,
+      required String subCollectionName}) async {
     var list;
     await _firestore
         .collection(collectionName)
@@ -124,7 +129,7 @@ class FirebaseServices {
     return await _firestore
         .collection(collectionRef)
         .doc(documentId)
-        .collection(UsersKey.userImageSubCollection)
+        .collection(UsersKey.subCollection)
         .doc(subDocumentId)
         .update(data);
   }
@@ -207,32 +212,54 @@ class FirebaseServices {
     }
     return url;
   }
-}
 
-class UserModel {
-  String? uid;
-  String? name;
-  bool? presence;
-  int? lastSeenInEpoch;
-  UserModel({
-    required uid,
-    required name,
-    required presence,
-    required lastSeenInEpoch,
-  });
-
-  UserModel.fromJson(Map<String, dynamic> json) {
-    uid = json['uid'];
-    name = json['name'];
-    presence = json['presence'];
-    lastSeenInEpoch = json['lastSeenInEpoch'];
+  /// add list data to document
+  static Future<void> addDataToList(String collectionName, String documentId,
+      Map<String, dynamic> data) async {
+    final collectionReference =
+        FirebaseFirestore.instance.collection(collectionName);
+    final documentReference = collectionReference.doc(documentId);
+    // {
+    //   'dataList': dataList,
+    // }
+    // List<dynamic> dataList,
+    await documentReference
+        .set(data, SetOptions(merge: true))
+        .then((value) => log("Data added successfully"))
+        .catchError((error) => log("Failed to add data: $error"));
   }
-  Map<String, dynamic> toJson() {
-    final Map<String, dynamic> data = Map<String, dynamic>();
-    data['uid'] = this.uid;
-    data['name'] = this.name;
-    data['presence'] = this.presence;
-    data['lastSeenInEpoch'] = this.lastSeenInEpoch;
-    return data;
+
+  /// retrive data in Stream
+  static Stream<DocumentSnapshot<Map<String, dynamic>>> getDocumentStream(
+      var userId) {
+    return _firestore.collection('users').doc(userId).snapshots();
   }
 }
+
+// class UserModel {
+//   String? uid;
+//   String? name;
+//   bool? presence;
+//   int? lastSeenInEpoch;
+//   UserModel({
+//     required uid,
+//     required name,
+//     required presence,
+//     required lastSeenInEpoch,
+//   });
+//
+//   UserModel.fromJson(Map<String, dynamic> json) {
+//     uid = json['uid'];
+//     name = json['name'];
+//     presence = json['presence'];
+//     lastSeenInEpoch = json['lastSeenInEpoch'];
+//   }
+//   Map<String, dynamic> toJson() {
+//     final Map<String, dynamic> data = Map<String, dynamic>();
+//     data['uid'] = this.uid;
+//     data['name'] = this.name;
+//     data['presence'] = this.presence;
+//     data['lastSeenInEpoch'] = this.lastSeenInEpoch;
+//     return data;
+//   }
+// }

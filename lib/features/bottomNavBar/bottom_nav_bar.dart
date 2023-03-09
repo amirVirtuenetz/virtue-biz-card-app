@@ -29,12 +29,12 @@ class _BottomNavBarState extends State<BottomNavBar> {
       alignment: Alignment.center,
       child: const Text("Contacts"),
     ),
-    // const QRCodeScannerScreen(),
+    // QRScanner(),
     // Container(
     //   alignment: Alignment.center,
     //   child: const Text("Scan"),
     // ),
-    const BarcodeScannerWithController(),
+    const QRCodeScannerScreen(),
     // Container(
     //   alignment: Alignment.center,
     //   child: const Text("Setting"),

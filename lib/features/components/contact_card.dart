@@ -5,11 +5,13 @@ class SocialContactCard extends StatelessWidget {
   final void Function() onPressed;
   final IconData? leadingIcon;
   final String title;
+  final Color? backgroundColor;
   const SocialContactCard({
     Key? key,
     required this.onPressed,
     this.leadingIcon,
     required this.title,
+    this.backgroundColor,
   }) : super(key: key);
 
   @override
@@ -22,7 +24,7 @@ class SocialContactCard extends StatelessWidget {
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(12),
       ),
-      tileColor: AppColor.primaryBackgroundColor,
+      tileColor: backgroundColor ?? AppColor.primaryBackgroundColor,
       // textColor: Colors.white,
       // iconColor: Colors.white,
       leading: Transform.translate(

@@ -81,7 +81,6 @@ class _BizCardMainState extends State<BizCardMain>
 
   @override
   Widget build(BuildContext context) {
-    log("Main Widget");
     return GestureDetector(
       onTap: () {
         FocusScope.of(context).unfocus();
@@ -100,6 +99,8 @@ class _BizCardMainState extends State<BizCardMain>
               if (userpro != null) {
                 log("Consumer Widget");
                 userpro.getDataFromFireStore();
+                userpro.getSubCollectionData();
+                log("Cover Image: ${userpro.userModel.coverUrl}");
                 loading = false;
                 userpro.cardTitleController.text =
                     userpro.userModel.cardTitle.toString();
@@ -119,7 +120,6 @@ class _BizCardMainState extends State<BizCardMain>
                 loading = true;
                 log("Loading...............");
               }
-
               void onUploadCoverImage() async {
                 log("this function in the consumer widget");
                 // await auth.getDataFromFireStore();
@@ -144,6 +144,79 @@ class _BizCardMainState extends State<BizCardMain>
                 mainAxisAlignment: MainAxisAlignment.center,
                 crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
+                  // SizedBox(
+                  //   height: 150,
+                  //   child: StreamBuilder<QuerySnapshot>(
+                  //     stream: FirebaseFirestore.instance
+                  //         .collection('users')
+                  //         .doc(userpro.userModel.uid)
+                  //         .collection(UsersKey.subCollection)
+                  //         .snapshots(),
+                  //     builder: (BuildContext context,
+                  //         AsyncSnapshot<QuerySnapshot> snapshot) {
+                  //       if (snapshot.hasError) {
+                  //         return Center(
+                  //             child: Text('Error: ${snapshot.error}'));
+                  //       }
+                  //
+                  //       switch (snapshot.connectionState) {
+                  //         case ConnectionState.waiting:
+                  //           return const CircularProgressIndicator();
+                  //         default:
+                  //           return ListView.builder(
+                  //             itemCount: snapshot.data?.docs.length,
+                  //             itemBuilder: (BuildContext context, int index) {
+                  //               DocumentSnapshot document =
+                  //                   snapshot.data!.docs[index];
+                  //               log("Document data: $document");
+                  //               return Container(
+                  //                 color: Colors.blueAccent,
+                  //                 child: ListTile(
+                  //                   title: Text(document.get("type")),
+                  //                   subtitle: Text(document.get("created")),
+                  //                 ),
+                  //               );
+                  //             },
+                  //           );
+                  //       }
+                  //     },
+                  //   ),
+                  // ),
+                  ///
+                  // SizedBox(
+                  //   height: 150,
+                  //   child: StreamBuilder<DocumentSnapshot>(
+                  //     stream: userpro.getListData(),
+                  //     builder: (BuildContext context,
+                  //         AsyncSnapshot<DocumentSnapshot> snapshot) {
+                  //       if (!snapshot.hasData) {
+                  //         return const Text('Loading...');
+                  //       }
+                  //       final List<dynamic> dataList =
+                  //           snapshot.data?.get("list");
+                  //       if (dataList.isNotEmpty) {
+                  //         return ListView.builder(
+                  //           itemCount: dataList.length,
+                  //           itemBuilder: (BuildContext context, int index) {
+                  //             final dynamic data = dataList[index];
+                  //             return Padding(
+                  //               padding: const EdgeInsets.all(4.0),
+                  //               child: SocialContactCard(
+                  //                 backgroundColor: Colors.blueAccent,
+                  //                 title: data,
+                  //                 onPressed: () {},
+                  //               ),
+                  //             );
+                  //             // return a ListTile or any other widget that displays the data
+                  //           },
+                  //         );
+                  //       } else {
+                  //         return Container();
+                  //       }
+                  //     },
+                  //   ),
+                  // ),
+
                   Padding(
                     padding: const EdgeInsets.symmetric(
                         horizontal: 20, vertical: 20),
@@ -170,7 +243,8 @@ class _BizCardMainState extends State<BizCardMain>
                         Positioned(
                           width: MediaQuery.of(context).size.width * 0.88,
                           height: 220,
-                          child: userpro.userModel.coverUrl == null
+                          child: userpro.userModel.coverUrl == null ||
+                                  userpro.userModel.coverUrl!.isEmpty
                               ? Container(
                                   // width: MediaQuery.of(context).size.width * 0.88,
                                   decoration: BoxDecoration(
@@ -313,6 +387,18 @@ class _BizCardMainState extends State<BizCardMain>
                                                     child: Image.network(
                                                       "${userpro.userModel.photoUrl}",
                                                       fit: BoxFit.cover,
+                                                      // frameBuilder: (BuildContext
+                                                      //         context,
+                                                      //     Widget child,
+                                                      //     int? frame,
+                                                      //     bool wasSyncLoaded) {
+                                                      //   if (wasSyncLoaded) {
+                                                      //     return child;
+                                                      //   }
+                                                      //   return frame == null
+                                                      //       ? const ShimmerEffect()
+                                                      //       : child;
+                                                      // },
                                                     ),
                                                   ),
                                                 )
@@ -335,7 +421,8 @@ class _BizCardMainState extends State<BizCardMain>
                                 right: 0,
                                 // width: 40,
                                 // height: 40,
-                                child: userpro.userModel.logoUrl == null
+                                child: userpro.userModel.logoUrl == null ||
+                                        userpro.userModel.logoUrl!.isEmpty
                                     ? CircleAvatar(
                                         radius: 20,
                                         backgroundColor: Colors.white,
@@ -575,8 +662,10 @@ class _BizCardMainState extends State<BizCardMain>
                         Navigator.of(context).push(
                           MaterialPageRoute(
                             builder: (context) => BusinessCardTemplate(
+                              userData: userpro.userModel,
                               color: selectedColor,
-                              isSocialColorEnabled: _switchValue,
+                              isSocialColorEnabled:
+                                  ref.watch(userpro.newSwitch),
                             ),
                           ),
                         );
@@ -592,7 +681,7 @@ class _BizCardMainState extends State<BizCardMain>
                         horizontal: 40, vertical: 15),
                     child: AppTextButton(
                       onPressed: () async {
-                        await userpro.onSaveButtonPressed();
+                        await userpro.onSaveButtonPressed(context);
                         FocusScope.of(context).unfocus();
                         // myData.name = nameController.text;
                         // myData.jobTitle = jobTitleController.text;
@@ -1011,7 +1100,7 @@ class ProfileImageWidget extends StatelessWidget {
                       child: ClipRRect(
                         borderRadius: BorderRadius.circular(100),
                         child: Image.network(
-                          "${newtWorkImage}",
+                          newtWorkImage,
                           fit: BoxFit.cover,
                         ),
                       ),

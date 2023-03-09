@@ -5,5 +5,5 @@ class UsersKey {
   static const currentUserKey = 'currentUserKey';
   static const isOnBoardingScreen = 'isOnBoardingScreen';
   static const usersImagesCollection = 'userImages';
-  static const userImageSubCollection = '/subCollection';
+  static const subCollection = '/subCollection';
 }

@@ -52,7 +52,8 @@ class QRExample extends HookConsumerWidget {
                                     child: const Text('Create Qr'),
                                     onPressed: () {
                                       qrData.qrData = qrdata.text;
-                                      Navigator.pushNamed(context, '/CreateQr');
+                                      Navigator.of(context).pop();
+                                      // Navigator.pushNamed(context, '/CreateQr');
                                     },
                                   )
                                 ],
@@ -82,7 +83,7 @@ class QRExample extends HookConsumerWidget {
             labelColor: Colors.black87,
             tabs: const [
               Tab(text: 'Scans'),
-              Tab(text: 'Createds'),
+              Tab(text: 'Created'),
             ],
           ),
         ),
@@ -114,7 +115,8 @@ class QRExample extends HookConsumerWidget {
                       ),
                       onTap: () {
                         qrData.qrData = qrData.scannedQrs[i];
-                        Navigator.pushNamed(context, '/CreateQr');
+                        Navigator.of(context).pop();
+                        // Navigator.pushNamed(context, '/CreateQr');
                       },
                     ),
                   ),
@@ -144,7 +146,8 @@ class QRExample extends HookConsumerWidget {
                       ),
                       onTap: () {
                         qrData.qrData = qrData.createdQrs[i];
-                        Navigator.pushNamed(context, '/CreateQr');
+                        Navigator.of(context).pop();
+                        // Navigator.pushNamed(context, '/CreateQr');
                       },
                     ),
                   ),

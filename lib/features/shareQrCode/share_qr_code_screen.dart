@@ -1,14 +1,15 @@
 import 'dart:convert';
 import 'dart:developer';
 import 'dart:io';
-import 'dart:typed_data';
 import 'dart:ui';
 
 import 'package:biz_card/core/helpers/alert_message.dart';
+import 'package:biz_card/features/model/user_model.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_share_me/flutter_share_me.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:gallery_saver/gallery_saver.dart';
@@ -22,6 +23,7 @@ import 'package:whatsapp_share/whatsapp_share.dart';
 import '../../core/helpers/app_colors.dart';
 import '../components/text_button.dart';
 import '../model/model.dart';
+import '../providers/user_provider.dart';
 import 'components/list_tile_widget.dart';
 
 class ShareQRCodeScreen extends StatefulWidget {
@@ -34,8 +36,10 @@ class ShareQRCodeScreen extends StatefulWidget {
 class _ShareQRCodeScreenState extends State<ShareQRCodeScreen> {
   GlobalKey globalKey = GlobalKey();
   QrCodeData data = QrCodeData();
+  UserDataModel userDataModel = UserDataModel();
   String? encodedJson;
   bool isInternet = false;
+  File? file;
   @override
   void initState() {
     data = QrCodeData(
@@ -43,11 +47,12 @@ class _ShareQRCodeScreenState extends State<ShareQRCodeScreen> {
         jobTitle: "Flutter Developer",
         company: "Virtuenetz",
         address: "Rahim Yar Khan",
-        bio: "Hi!, I am flutter developer");
-    setState(() {
-      encodedJson = jsonEncode(data);
-      log("My Data: $encodedJson");
-    });
+        bio: "Hi!, I am flutter developer",
+        link: "https://www.instagram.com/raisamir7082");
+    // setState(() {
+    //   encodedJson = jsonEncode(data);
+    //   log("My Data: $encodedJson");
+    // });
     setBrightness(1.0);
     super.initState();
   }
@@ -77,6 +82,7 @@ class _ShareQRCodeScreenState extends State<ShareQRCodeScreen> {
       // final tempDir = await getTemporaryDirectory();
       final file = await File('${directory?.path}/image.png').create();
       log("File in ABC: $file");
+      this.file = file;
       var ed = await file.writeAsBytes(pngBytes);
       log("File in ED: $ed");
       saveImageToGallery(ed);
@@ -138,354 +144,378 @@ class _ShareQRCodeScreenState extends State<ShareQRCodeScreen> {
       ),
       body: SafeArea(
         child: SingleChildScrollView(
-          child: Column(
-            children: [
-              Container(
-                padding: const EdgeInsets.only(top: 10.0),
-                margin: const EdgeInsets.symmetric(horizontal: 50),
-                // margin: const EdgeInsets.symmetric(horizontal: 0),
-                width: double.infinity,
-                child: MaterialButton(
-                  onPressed: () {},
-                  // textColor: Colors.blue.shade700,
-                  elevation: 2,
-                  hoverElevation: 2,
-                  highlightElevation: 2,
-                  disabledElevation: 2,
-                  enableFeedback: false,
-                  color: Colors.white,
-                  // textTheme: ButtonTextTheme.accent,
-                  textColor: Colors.blueAccent,
-                  // minWidth: 100,
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(25),
-                    // side: BorderSide(color: Colors.blue.shade700),
+          child: Consumer(builder: (context, ref, _) {
+            final userpro = ref.watch(userProvider);
+            if (userpro != null) {
+              log("Consumer Widget");
+              userpro.getDataFromFireStore();
+              log("profile Link: ${userpro.userModel.profileLink}");
+              encodedJson = jsonEncode(userpro.userModel);
+              log("Encoded Json : $encodedJson");
+              // selectedColor = Color(
+              //     int.parse("0XFF${auth.userModel.brandColor.toString()}"));
+              // log("brand color: ${selectedColor}");
+            } else {
+              log("Loading...............");
+            }
+
+            return Column(
+              children: [
+                Container(
+                  padding: const EdgeInsets.only(top: 10.0),
+                  margin: const EdgeInsets.symmetric(horizontal: 50),
+                  // margin: const EdgeInsets.symmetric(horizontal: 0),
+                  width: double.infinity,
+                  child: MaterialButton(
+                    onPressed: () {},
+                    // textColor: Colors.blue.shade700,
+                    elevation: 2,
+                    hoverElevation: 2,
+                    highlightElevation: 2,
+                    disabledElevation: 2,
+                    enableFeedback: false,
+                    color: Colors.white,
+                    // textTheme: ButtonTextTheme.accent,
+                    textColor: Colors.blueAccent,
+                    // minWidth: 100,
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 20, vertical: 10),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(25),
+                      // side: BorderSide(color: Colors.blue.shade700),
+                    ),
+                    child: Align(
+                      alignment: Alignment.center,
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Text(
+                            "Sharing ${userpro.userModel.displayName}",
+                            textAlign: TextAlign.start,
+                            style: const TextStyle(
+                              fontSize: 18,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                          const Icon(
+                            Icons.keyboard_arrow_down_outlined,
+                            size: 30,
+                          )
+                        ],
+                      ),
+                    ),
                   ),
-                  child: Align(
-                    alignment: Alignment.center,
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        const Text(
-                          "Sharing Amir Chachar",
-                          textAlign: TextAlign.start,
+                ),
+                Padding(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 30, vertical: 20),
+                  child: GestureDetector(
+                    onTap: capture,
+                    child: RepaintBoundary(
+                      key: globalKey,
+                      child: Container(
+                        color: Colors.white,
+                        child: QrImage(
+                          data: "$encodedJson",
+                          size: 250,
+                          embeddedImage:
+                              const AssetImage("assets/images/bizCardLogo.png"),
+                          embeddedImageStyle: QrEmbeddedImageStyle(
+                            size: const Size(60, 60),
+                          ),
+                          errorStateBuilder: (context, ex) {
+                            log("[QR] ERROR - $ex");
+                            return Center(
+                              child: Text("Error: $ex"),
+                            );
+                            // setState((){
+                            //   _inputErrorText = "Error! Maybe your input value is too long?";
+                            // });
+                          },
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                  children: [
+                    AppTextButton(
+                      size: const Size(100, 50),
+                      backgroundColor: AppColor.primaryBackgroundColor,
+                      textColor: Colors.black,
+                      onPressed: () {},
+                      title: "Edit QR",
+                    ),
+                    AppTextButton(
+                      size: const Size(100, 50),
+                      onPressed: () {},
+                      title: "Share",
+                    ),
+                  ],
+                ),
+
+                Container(
+                  margin:
+                      const EdgeInsets.symmetric(horizontal: 20, vertical: 20),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 15, vertical: 2),
+                  decoration: BoxDecoration(
+                    color: const Color(0XFFF4F4F4),
+                    border: Border.all(width: 0.5, color: Colors.grey),
+                    // color: Colors.grey.shade300,
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      const Text(
+                        "Copy Cod Link",
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w400,
+                        ),
+                      ),
+                      IconButton(
+                        onPressed: () async {
+                          await Clipboard.setData(const ClipboardData(
+                                  text: "Your link has been saved"))
+                              .then((value) {
+                            AlertMessage.successMessage("Card Link Copied");
+                          });
+                        },
+                        icon: Icon(Icons.copy),
+                      )
+                    ],
+                  ),
+                ),
+
+                ///add card to wallet
+                Container(
+                  margin:
+                      const EdgeInsets.symmetric(horizontal: 20, vertical: 1),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 10, vertical: 15),
+                  decoration: BoxDecoration(
+                    color: const Color(0XFFF4F4F4),
+                    border: Border.all(width: 0.2, color: Colors.grey),
+                    // color: Colors.grey.shade300,
+                    borderRadius: const BorderRadius.only(
+                      topLeft: Radius.circular(12),
+                      topRight: Radius.circular(12),
+                      bottomLeft: Radius.circular(1),
+                      bottomRight: Radius.circular(1),
+                    ),
+                  ),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.start,
+                    children: const [
+                      Padding(
+                        padding: EdgeInsets.only(right: 10),
+                        child: Icon(Icons.wallet),
+                      ),
+                      Expanded(
+                        child: Text(
+                          "Add Card to Wallet",
                           style: TextStyle(
-                            fontSize: 18,
-                            fontWeight: FontWeight.w600,
+                            fontSize: 16,
+                            fontWeight: FontWeight.w400,
                           ),
                         ),
-                        const Icon(
-                          Icons.keyboard_arrow_down_outlined,
-                          size: 30,
-                        )
+                      ),
+                    ],
+                  ),
+                ),
+
+                ///add QR Code to photos
+                GestureDetector(
+                  onTap: () {
+                    capture();
+                  },
+                  child: Container(
+                    margin:
+                        const EdgeInsets.symmetric(horizontal: 20, vertical: 2),
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 10, vertical: 15),
+                    decoration: BoxDecoration(
+                      color: const Color(0XFFF4F4F4),
+                      border: Border.all(width: 0.2, color: Colors.grey),
+                      // color: Colors.grey.shade300,
+                      borderRadius: BorderRadius.circular(1),
+                    ),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.start,
+                      children: const [
+                        Padding(
+                          padding: EdgeInsets.only(right: 10),
+                          child: Icon(Icons.qr_code),
+                        ),
+                        Expanded(
+                          child: Text(
+                            "Save QR Code to Photos",
+                            style: TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.w400,
+                            ),
+                          ),
+                        ),
                       ],
                     ),
                   ),
                 ),
-              ),
-              Padding(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 30, vertical: 20),
-                child: GestureDetector(
-                  onTap: capture,
-                  child: RepaintBoundary(
-                    key: globalKey,
-                    child: Container(
-                      color: Colors.white,
-                      child: QrImage(
-                        data: "$encodedJson",
-                        size: 250,
-                        embeddedImage:
-                            const AssetImage("assets/images/bizCardLogo.png"),
-                        embeddedImageStyle: QrEmbeddedImageStyle(
-                          size: const Size(60, 60),
-                        ),
-                        errorStateBuilder: (context, ex) {
-                          log("[QR] ERROR - $ex");
-                          return Center(
-                            child: Text("Error: $ex"),
-                          );
-                          // setState((){
-                          //   _inputErrorText = "Error! Maybe your input value is too long?";
-                          // });
-                        },
-                      ),
-                    ),
-                  ),
-                ),
-              ),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                children: [
-                  AppTextButton(
-                    size: const Size(100, 50),
-                    backgroundColor: AppColor.primaryBackgroundColor,
-                    textColor: Colors.black,
-                    onPressed: () {},
-                    title: "Edit QR",
-                  ),
-                  AppTextButton(
-                    size: const Size(100, 50),
-                    onPressed: () {},
-                    title: "Share",
-                  ),
-                ],
-              ),
 
-              Container(
-                margin:
-                    const EdgeInsets.symmetric(horizontal: 20, vertical: 20),
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 15, vertical: 2),
-                decoration: BoxDecoration(
-                  color: const Color(0XFFF4F4F4),
-                  border: Border.all(width: 0.5, color: Colors.grey),
-                  // color: Colors.grey.shade300,
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    const Text(
-                      "Copy Cod Link",
-                      style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w400,
-                      ),
+                /// Share with no internet
+                Container(
+                  margin:
+                      const EdgeInsets.symmetric(horizontal: 20, vertical: 1),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 10, vertical: 15),
+                  decoration: BoxDecoration(
+                    color: const Color(0XFFF4F4F4),
+                    border: Border.all(width: 0.2, color: Colors.grey),
+                    // color: Colors.grey.shade300,
+                    borderRadius: const BorderRadius.only(
+                      topLeft: Radius.circular(1),
+                      topRight: Radius.circular(1),
+                      bottomLeft: Radius.circular(12),
+                      bottomRight: Radius.circular(12),
                     ),
-                    IconButton(
-                      onPressed: () async {
-                        await Clipboard.setData(const ClipboardData(
-                                text: "Your link has been saved"))
-                            .then((value) {
-                          AlertMessage.successMessage("Card Link Copied");
-                        });
-                      },
-                      icon: Icon(Icons.copy),
-                    )
-                  ],
-                ),
-              ),
-
-              ///add card to wallet
-              Container(
-                margin: const EdgeInsets.symmetric(horizontal: 20, vertical: 1),
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 10, vertical: 15),
-                decoration: BoxDecoration(
-                  color: const Color(0XFFF4F4F4),
-                  border: Border.all(width: 0.2, color: Colors.grey),
-                  // color: Colors.grey.shade300,
-                  borderRadius: const BorderRadius.only(
-                    topLeft: Radius.circular(12),
-                    topRight: Radius.circular(12),
-                    bottomLeft: Radius.circular(1),
-                    bottomRight: Radius.circular(1),
                   ),
-                ),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.start,
-                  children: const [
-                    Padding(
-                      padding: EdgeInsets.only(right: 10),
-                      child: Icon(Icons.wallet),
-                    ),
-                    Expanded(
-                      child: Text(
-                        "Add Card to Wallet",
-                        style: TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.w400,
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      const Padding(
+                        padding: EdgeInsets.only(right: 10),
+                        child: Icon(Icons.wifi_off_outlined),
+                      ),
+                      const Expanded(
+                        child: Text(
+                          "Share with no internet",
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w400,
+                          ),
                         ),
                       ),
-                    ),
-                  ],
-                ),
-              ),
-
-              ///add QR Code to photos
-              Container(
-                margin: const EdgeInsets.symmetric(horizontal: 20, vertical: 2),
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 10, vertical: 15),
-                decoration: BoxDecoration(
-                  color: const Color(0XFFF4F4F4),
-                  border: Border.all(width: 0.2, color: Colors.grey),
-                  // color: Colors.grey.shade300,
-                  borderRadius: BorderRadius.circular(1),
-                ),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.start,
-                  children: const [
-                    Padding(
-                      padding: EdgeInsets.only(right: 10),
-                      child: Icon(Icons.qr_code),
-                    ),
-                    Expanded(
-                      child: Text(
-                        "Save QR Code to Photos",
-                        style: TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.w400,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-
-              /// Share with no internet
-              Container(
-                margin: const EdgeInsets.symmetric(horizontal: 20, vertical: 1),
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 10, vertical: 15),
-                decoration: BoxDecoration(
-                  color: const Color(0XFFF4F4F4),
-                  border: Border.all(width: 0.2, color: Colors.grey),
-                  // color: Colors.grey.shade300,
-                  borderRadius: const BorderRadius.only(
-                    topLeft: Radius.circular(1),
-                    topRight: Radius.circular(1),
-                    bottomLeft: Radius.circular(12),
-                    bottomRight: Radius.circular(12),
+                      SizedBox(
+                        width: 40,
+                        height: 30,
+                        child: Switch(
+                            value: isInternet,
+                            onChanged: (val) {
+                              setState(() {
+                                isInternet = val;
+                              });
+                            }),
+                      )
+                    ],
                   ),
                 ),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    const Padding(
-                      padding: EdgeInsets.only(right: 10),
-                      child: Icon(Icons.wifi_off_outlined),
-                    ),
-                    const Expanded(
-                      child: Text(
-                        "Share with no internet",
-                        style: TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.w400,
-                        ),
-                      ),
-                    ),
-                    SizedBox(
-                      width: 40,
-                      height: 30,
-                      child: Switch(
-                          value: isInternet,
-                          onChanged: (val) {
-                            setState(() {
-                              isInternet = val;
-                            });
-                          }),
-                    )
-                  ],
+                SizedBox(
+                  height: 20,
                 ),
-              ),
-              SizedBox(
-                height: 20,
-              ),
 
-              ///
-              // Padding(
-              //   padding:
-              //       const EdgeInsets.symmetric(horizontal: 20, vertical: 0),
-              //   child: SwitchListTile(
-              //       tileColor: const Color(0XFFF4F4F4),
-              //       inactiveThumbColor: const Color(0XFFC8DCF7),
-              //       inactiveTrackColor: const Color(0XFFA5C6F3),
-              //       activeColor: Colors.blueAccent,
-              //       activeTrackColor: const Color(0XFFA5C6F3),
-              //       shape: const RoundedRectangleBorder(
-              //         borderRadius: BorderRadius.only(
-              //           topLeft: Radius.circular(1),
-              //           topRight: Radius.circular(1),
-              //           bottomLeft: Radius.circular(12),
-              //           bottomRight: Radius.circular(12),
-              //         ),
-              //         side: BorderSide(width: 0.2, color: Colors.grey),
-              //       ),
-              //       secondary: const Icon(
-              //         Icons.wifi_off_outlined,
-              //         color: Colors.black,
-              //       ),
-              //       title: const Text(
-              //         "Share with no internet",
-              //         textAlign: TextAlign.start,
-              //         style: TextStyle(
-              //           fontSize: 16,
-              //           fontWeight: FontWeight.w400,
-              //         ),
-              //       ),
-              //       value: isInternet,
-              //       onChanged: (val) {
-              //         setState(() {
-              //           isInternet = val;
-              //         });
-              //       }),
-              // ),
+                ///
+                // Padding(
+                //   padding:
+                //       const EdgeInsets.symmetric(horizontal: 20, vertical: 0),
+                //   child: SwitchListTile(
+                //       tileColor: const Color(0XFFF4F4F4),
+                //       inactiveThumbColor: const Color(0XFFC8DCF7),
+                //       inactiveTrackColor: const Color(0XFFA5C6F3),
+                //       activeColor: Colors.blueAccent,
+                //       activeTrackColor: const Color(0XFFA5C6F3),
+                //       shape: const RoundedRectangleBorder(
+                //         borderRadius: BorderRadius.only(
+                //           topLeft: Radius.circular(1),
+                //           topRight: Radius.circular(1),
+                //           bottomLeft: Radius.circular(12),
+                //           bottomRight: Radius.circular(12),
+                //         ),
+                //         side: BorderSide(width: 0.2, color: Colors.grey),
+                //       ),
+                //       secondary: const Icon(
+                //         Icons.wifi_off_outlined,
+                //         color: Colors.black,
+                //       ),
+                //       title: const Text(
+                //         "Share with no internet",
+                //         textAlign: TextAlign.start,
+                //         style: TextStyle(
+                //           fontSize: 16,
+                //           fontWeight: FontWeight.w400,
+                //         ),
+                //       ),
+                //       value: isInternet,
+                //       onChanged: (val) {
+                //         setState(() {
+                //           isInternet = val;
+                //         });
+                //       }),
+                // ),
 
-              ///  share with social
-              ///share via Email
-              QRCodeScanListTile(
-                title: 'Share Card via Email',
-                bottomRadius: 1,
-                topRadius: 12,
-                iconData: CupertinoIcons.envelope,
-                onTap: shareViaEmail,
-              ),
+                ///  share with social
+                ///share via Email
+                QRCodeScanListTile(
+                  title: 'Share Card via Email',
+                  bottomRadius: 1,
+                  topRadius: 12,
+                  iconData: CupertinoIcons.envelope,
+                  onTap: shareViaEmail,
+                ),
 
-              ///add Card via Text
-              QRCodeScanListTile(
-                onTap: shareViaText,
-                title: 'Share Card via Text',
-                bottomRadius: 1,
-                iconData: CupertinoIcons.chat_bubble,
-              ),
+                ///add Card via Text
+                QRCodeScanListTile(
+                  onTap: shareViaText,
+                  title: 'Share Card via Text',
+                  bottomRadius: 1,
+                  iconData: CupertinoIcons.chat_bubble,
+                ),
 
-              QRCodeScanListTile(
-                onTap: shareViaWhatsapp,
-                title: 'Share Card via Whatsapp',
-                bottomRadius: 1,
-                iconData: FontAwesomeIcons.whatsapp,
-              ),
+                QRCodeScanListTile(
+                  onTap: shareViaWhatsapp,
+                  title: 'Share Card via Whatsapp',
+                  bottomRadius: 1,
+                  iconData: FontAwesomeIcons.whatsapp,
+                ),
 
-              ///Share card via LinkedIn
-              QRCodeScanListTile(
-                onTap: () {
-                  shareMore();
-                },
-                title: 'Share Card via LinkedIn',
-                bottomRadius: 1,
-                iconData: FontAwesomeIcons.linkedin,
-              ),
+                ///Share card via LinkedIn
+                QRCodeScanListTile(
+                  onTap: () {
+                    shareMore();
+                  },
+                  title: 'Share Card via LinkedIn',
+                  bottomRadius: 1,
+                  iconData: FontAwesomeIcons.linkedin,
+                ),
 
-              ///Share Card via Instagram
-              QRCodeScanListTile(
-                onTap: () {
-                  shareViaInstagram(Share.share_system);
-                },
-                title: 'Share Card via Instagram',
-                bottomRadius: 1,
-                iconData: FontAwesomeIcons.instagram,
-              ),
+                ///Share Card via Instagram
+                QRCodeScanListTile(
+                  onTap: () {
+                    shareViaInstagram(Share.share_system);
+                  },
+                  title: 'Share Card via Instagram',
+                  bottomRadius: 1,
+                  iconData: FontAwesomeIcons.instagram,
+                ),
 
-              // /// Share card via whatsapp
-              // QRCodeScanListTile(
-              //   onTap: () {},
-              //   title: 'Share Card via Whatsapp',
-              //   bottomRadius: 1,
-              //   iconData: FontAwesomeIcons.whatsapp,
-              // ),
+                // /// Share card via whatsapp
+                // QRCodeScanListTile(
+                //   onTap: () {},
+                //   title: 'Share Card via Whatsapp',
+                //   bottomRadius: 1,
+                //   iconData: FontAwesomeIcons.whatsapp,
+                // ),
 
-              /// Share another way
-              QRCodeScanListTile(
-                onTap: shareOtherWay,
-                title: 'Share another way',
-                iconData: Icons.more_horiz_outlined,
-              ),
-            ],
-          ),
+                /// Share another way
+                QRCodeScanListTile(
+                  onTap: shareOtherWay,
+                  title: 'Share another way',
+                  iconData: Icons.more_horiz_outlined,
+                ),
+              ],
+            );
+          }),
         ),
       ),
     );
@@ -534,9 +564,10 @@ class _ShareQRCodeScreenState extends State<ShareQRCodeScreen> {
 
   shareViaWhatsapp() async {
     isInstalled().then((value) async {
-      await WhatsappShare.share(
-        text: 'Example share text',
-        linkUrl: 'https://flutter.dev/',
+      await WhatsappShare.shareFile(
+        filePath: [file!.path],
+        text: 'VirtueBizz Card App',
+        // linkUrl: 'https://flutter.dev/',
         phone: '911234567890',
       );
     }).catchError((e) {

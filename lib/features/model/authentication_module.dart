@@ -215,7 +215,9 @@ class Authentication {
           "bio": '',
           "brandColor": '',
           "cardTitle": '',
-          "linkedIn": ''
+          "linkedIn": '',
+          "list": '',
+          'profileLink': ''
         };
         await FirebaseServices.addData('users', currentUser?.uid, userInfo);
         signUpNameController.clear();
@@ -278,7 +280,8 @@ class Authentication {
       "bio": '',
       "brandColor": '',
       "cardTitle": '',
-      "linkedIn": ''
+      "linkedIn": '',
+      'profileLink': ''
     }).then((value) {
       log("Current Anonymous User Detail has been saved in Locally");
     }).catchError((e) {
@@ -331,7 +334,9 @@ class Authentication {
       "bio": '',
       "brandColor": '',
       "cardTitle": '',
-      "linkedIn": ''
+      "linkedIn": '',
+      "list": '',
+      'profileLink': ''
     };
     await FirebaseServices.addData('users', currentUser?.uid, userInfo)
         .then((value) {

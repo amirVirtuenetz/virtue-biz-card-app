@@ -7,7 +7,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_easyloading/flutter_easyloading.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import 'features/screens/auth_checker.dart';
+import 'features/authModule/auth_checker.dart';
 
 //  This is a FutureProvider that will be used to check whether the firebase has been initialized or not
 final firebaseInitializerProvider = FutureProvider<FirebaseApp>((ref) async {
