@@ -7,6 +7,8 @@ import 'package:image_picker/image_picker.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
 import 'package:url_launcher/url_launcher.dart';
 
+import '../model/user_model.dart';
+
 class QRCodeScannerScreen extends StatefulWidget {
   const QRCodeScannerScreen({Key? key}) : super(key: key);
 
@@ -81,7 +83,7 @@ class _QRCodeScannerScreenState extends State<QRCodeScannerScreen>
         }
       }
     } catch (e) {
-      log("QR Scan Error ${e}");
+      log("QR Scan Error $e");
     }
   }
 
@@ -122,8 +124,11 @@ class _QRCodeScannerScreenState extends State<QRCodeScannerScreen>
                   Map<String, dynamic> jsonMap =
                       jsonDecode("${barcode.barcodes.first.rawValue}");
                   // barcode.barcodes.first.rawBytes.toString()
-                  print("Link url : ${jsonMap['profileLink']}");
-                  launchInBrowser(Uri.parse(jsonMap['profileLink']));
+                  var userData = UserDataModel.fromJson(jsonMap);
+                  log("jsonMap Type: $userData");
+                  log("Link url : ${jsonMap['profileLink']}");
+                  String link = "https://amirvirtuenetz.github.io";
+                  launchInBrowser(Uri.parse(link));
                 },
               ),
               Positioned(

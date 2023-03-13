@@ -2,6 +2,7 @@ import 'dart:developer';
 import 'dart:io';
 
 import 'package:biz_card/features/socialLink/social_link_screen.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -17,7 +18,7 @@ import '../components/text_button.dart';
 import '../model/model.dart';
 import '../providers/user_provider.dart';
 
-var switchProvider = StateProvider((ref) => false);
+// var switchProvider = StateProvider((ref) => false);
 
 class BizCardMain extends StatefulWidget {
   const BizCardMain({
@@ -32,12 +33,6 @@ class _BizCardMainState extends State<BizCardMain>
     with TickerProviderStateMixin {
   late AnimationController animateController;
 
-  // final TextEditingController cardTitleController = TextEditingController();
-  // final TextEditingController nameController = TextEditingController();
-  // final TextEditingController jobTitleController = TextEditingController();
-  // final TextEditingController companyController = TextEditingController();
-  // final TextEditingController addressController = TextEditingController();
-  // final TextEditingController bioController = TextEditingController();
   ImagePicker picker = ImagePicker();
   File? coverImage;
   File? profileImage;
@@ -60,7 +55,6 @@ class _BizCardMainState extends State<BizCardMain>
   ];
   Color selectedColor = Colors.black;
   bool loading = false;
-  bool _switchValue = false;
   @override
   initState() {
     super.initState();
@@ -96,12 +90,13 @@ class _BizCardMainState extends State<BizCardMain>
           child: SingleChildScrollView(
             child: Consumer(builder: (context, ref, _) {
               final userpro = ref.watch(userProvider);
-              if (userpro != null) {
+              userpro.getDataFromFireStore();
+              userpro.getSubCollectionData();
+              if (userpro.userModel != null) {
                 log("Consumer Widget");
-                userpro.getDataFromFireStore();
-                userpro.getSubCollectionData();
                 log("Cover Image: ${userpro.userModel.coverUrl}");
                 loading = false;
+                log("Loading...............  $loading");
                 userpro.cardTitleController.text =
                     userpro.userModel.cardTitle.toString();
                 userpro.nameController.text =
@@ -118,7 +113,7 @@ class _BizCardMainState extends State<BizCardMain>
                 // log("brand color: ${selectedColor}");
               } else {
                 loading = true;
-                log("Loading...............");
+                log("Loading...............  ${loading}");
               }
               void onUploadCoverImage() async {
                 log("this function in the consumer widget");
@@ -139,7 +134,13 @@ class _BizCardMainState extends State<BizCardMain>
                     image: logoImage, types: ImageTypes.logoImage);
               }
 
-              return Column(
+              return
+                  // loading == true
+                  //   ? const Center(
+                  //       child: CircularProgressIndicator(),
+                  //     )
+                  //   :
+                  Column(
                 mainAxisSize: MainAxisSize.min,
                 mainAxisAlignment: MainAxisAlignment.center,
                 crossAxisAlignment: CrossAxisAlignment.center,
@@ -267,13 +268,18 @@ class _BizCardMainState extends State<BizCardMain>
                                   child: Image.network(
                                     "${userpro.userModel.coverUrl}",
                                     fit: BoxFit.cover,
+                                    errorBuilder: (context, obj, stackTrace) {
+                                      return Center(
+                                        child: Text("Error: ${stackTrace}"),
+                                      );
+                                    },
                                   ),
                                 ),
                         ),
 
                         /// Edit Image button
                         Positioned(
-                            width: 110,
+                            width: 120,
                             height: 40,
                             right: 0,
                             top: 10,
@@ -357,6 +363,13 @@ class _BizCardMainState extends State<BizCardMain>
                                                     child: Image.network(
                                                       "${userpro.userModel.photoUrl}",
                                                       fit: BoxFit.cover,
+                                                      errorBuilder: (context,
+                                                          obj, stackTrace) {
+                                                        return Center(
+                                                          child: Text(
+                                                              "Error: ${stackTrace}"),
+                                                        );
+                                                      },
                                                     ),
                                                   ),
                                                 ),
@@ -387,6 +400,13 @@ class _BizCardMainState extends State<BizCardMain>
                                                     child: Image.network(
                                                       "${userpro.userModel.photoUrl}",
                                                       fit: BoxFit.cover,
+                                                      errorBuilder: (context,
+                                                          obj, stackTrace) {
+                                                        return Center(
+                                                          child: Text(
+                                                              "Error: ${stackTrace}"),
+                                                        );
+                                                      },
                                                       // frameBuilder: (BuildContext
                                                       //         context,
                                                       //     Widget child,
@@ -467,6 +487,13 @@ class _BizCardMainState extends State<BizCardMain>
                                                     fit: BoxFit.cover,
                                                     width: 40,
                                                     height: 40,
+                                                    errorBuilder: (context, obj,
+                                                        stackTrace) {
+                                                      return Center(
+                                                        child: Text(
+                                                            "Error: ${stackTrace}"),
+                                                      );
+                                                    },
                                                   ),
                                                 )
                                               : ClipRRect(
@@ -662,10 +689,12 @@ class _BizCardMainState extends State<BizCardMain>
                         Navigator.of(context).push(
                           MaterialPageRoute(
                             builder: (context) => BusinessCardTemplate(
-                              userData: userpro.userModel,
+                              userId: FirebaseAuth.instance.currentUser?.uid,
+                              // userData: userpro.userModel,
                               color: selectedColor,
-                              isSocialColorEnabled:
-                                  ref.watch(userpro.newSwitch),
+                              isSocialColorEnabled: ref.watch(
+                                userpro.newSwitch,
+                              ),
                             ),
                           ),
                         );
@@ -1102,6 +1131,11 @@ class ProfileImageWidget extends StatelessWidget {
                         child: Image.network(
                           newtWorkImage,
                           fit: BoxFit.cover,
+                          errorBuilder: (context, obj, stackTrace) {
+                            return Center(
+                              child: Text("Error: ${stackTrace}"),
+                            );
+                          },
                         ),
                       ),
                     ),
@@ -1121,6 +1155,11 @@ class ProfileImageWidget extends StatelessWidget {
                         child: Image.network(
                           newtWorkImage,
                           fit: BoxFit.cover,
+                          errorBuilder: (context, obj, stackTrace) {
+                            return Center(
+                              child: Text("Error: $stackTrace"),
+                            );
+                          },
                         ),
                       ),
                     )
@@ -1135,6 +1174,31 @@ class ProfileImageWidget extends StatelessWidget {
                       ),
                     ),
             ),
+    );
+  }
+}
+
+class MyWidget extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      body: Center(
+        child: Consumer(
+          builder: (context, ref, _) {
+            final documentSnapshot = ref.watch(documentSnapshotProvider);
+
+            return documentSnapshot.when(
+              data: (snapshot) {
+                final data =
+                    snapshot.data(); // Access the data from the snapshot
+                return Text('Data: $data');
+              },
+              loading: () => CircularProgressIndicator(),
+              error: (error, stackTrace) => Text('Error: $error'),
+            );
+          },
+        ),
+      ),
     );
   }
 }

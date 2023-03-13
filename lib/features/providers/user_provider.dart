@@ -1,3 +1,4 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -16,4 +17,12 @@ final userStateProvider = StreamProvider<User?>((ref) {
 
 final linkStoreProvider = Provider<LinkStoreModuleClass>((ref) {
   return LinkStoreModuleClass();
+});
+
+final documentSnapshotProvider = FutureProvider<DocumentSnapshot>((ref) async {
+  final docRef = FirebaseFirestore.instance
+      .collection('users')
+      .doc(FirebaseAuth.instance.currentUser?.uid);
+  final snapshot = await docRef.get();
+  return snapshot;
 });

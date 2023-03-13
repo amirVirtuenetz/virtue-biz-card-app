@@ -25,6 +25,7 @@ class _BottomNavBarState extends State<BottomNavBar> {
 
   List list = [
     const BizCardMain(),
+    // MyWidget(),
     Container(
       alignment: Alignment.center,
       child: const Text("Contacts"),
