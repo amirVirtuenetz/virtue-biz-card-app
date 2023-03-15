@@ -63,7 +63,7 @@ class _ShareQRCodeScreenState extends State<ShareQRCodeScreen> {
     try {
       await ScreenBrightness().setScreenBrightness(brightness);
     } catch (e) {
-      print(e);
+      log("$e");
       throw 'Failed to set brightness';
     }
   }
@@ -91,7 +91,7 @@ class _ShareQRCodeScreenState extends State<ShareQRCodeScreen> {
       // final channel = const MethodChannel('channel:me.alfian.share/share');
       // channel.invokeMethod('shareFile', 'image.png');
     } catch (e) {
-      print("Error while sharing QR Code  : ${e.toString()}");
+      log("Error while sharing QR Code  : ${e.toString()}");
     }
   }
 
@@ -113,7 +113,7 @@ class _ShareQRCodeScreenState extends State<ShareQRCodeScreen> {
     try {
       await ScreenBrightness().resetScreenBrightness();
     } catch (e) {
-      print(e);
+      log("$e");
       throw 'Failed to reset brightness';
     }
   }
@@ -291,7 +291,7 @@ class _ShareQRCodeScreenState extends State<ShareQRCodeScreen> {
                             AlertMessage.successMessage("Card Link Copied");
                           });
                         },
-                        icon: Icon(Icons.copy),
+                        icon: const Icon(Icons.copy),
                       )
                     ],
                   ),
@@ -314,9 +314,9 @@ class _ShareQRCodeScreenState extends State<ShareQRCodeScreen> {
                       bottomRight: Radius.circular(1),
                     ),
                   ),
-                  child: Row(
+                  child: const Row(
                     mainAxisAlignment: MainAxisAlignment.start,
-                    children: const [
+                    children: [
                       Padding(
                         padding: EdgeInsets.only(right: 10),
                         child: Icon(Icons.wallet),
