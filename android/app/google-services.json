@@ -1,0 +1,48 @@
+{
+  "project_info": {
+    "project_number": "775724473313",
+    "firebase_url": "https://biz-card-9fa8a-default-rtdb.firebaseio.com",
+    "project_id": "biz-card-9fa8a",
+    "storage_bucket": "biz-card-9fa8a.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:775724473313:android:e4d7e9b9ee0248694a10a0",
+        "android_client_info": {
+          "package_name": "com.example.biz_card"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "775724473313-baii9pht3c8g6ptjno16klhqd6mauis2.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.example.biz_card",
+            "certificate_hash": "83ce87dd6fc59b7675819d08a284d60ab1998264"
+          }
+        },
+        {
+          "client_id": "775724473313-hv0lae6on5ea94hdad9vktmhk35vqdrb.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDtjBJIckBN0bkG9FB9Nk2NLUcWZATD9W0"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "775724473313-5vcgos7lbh5b2on0gvcjjdp1eimqtvm8.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
