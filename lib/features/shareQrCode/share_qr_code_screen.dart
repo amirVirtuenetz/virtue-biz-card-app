@@ -350,7 +350,7 @@ class _ShareQRCodeScreenState extends State<ShareQRCodeScreen> {
                       // color: Colors.grey.shade300,
                       borderRadius: BorderRadius.circular(1),
                     ),
-                    child: Row(
+                    child: const Row(
                       mainAxisAlignment: MainAxisAlignment.start,
                       children: [
                         Padding(
