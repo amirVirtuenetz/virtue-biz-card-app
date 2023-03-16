@@ -7,6 +7,7 @@ import 'package:flutter_easyloading/flutter_easyloading.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:url_strategy/url_strategy.dart';
 
+import 'core/helpers/fluro_router.dart';
 import 'core/helpers/routes.dart';
 
 //  This is a FutureProvider that will be used to check whether the firebase has been initialized or not
@@ -30,7 +31,7 @@ Future<void> main() async {
   setPathUrlStrategy();
   runApp(
     const ProviderScope(
-      child: App(),
+      child: RoutingApp(),
     ),
   );
 }

@@ -168,7 +168,7 @@ class _QRCodeScannerScreenState extends State<QRCodeScannerScreen>
                   final params = {"userId": "${userData.uid}"};
                   String link =
                       "https://amirvirtuenetz.github.io/cardScreen?${Uri(queryParameters: params)}";
-                  print(link);
+                  log(link);
                   launchInBrowser(Uri.parse(link));
                 },
               ),
