@@ -95,11 +95,9 @@ class Authentication {
         });
         await _auth.currentUser?.reload();
         log("current user id ${_auth.currentUser?.uid}");
-        var currentUser = _auth.currentUser;
-        saveDataLocally(currentUser);
+        // var currentUser = _auth.currentUser;
+        await getDataFromFireStore();
         EasyLoading.dismiss();
-        // loginEmailController.clear();
-        // loginPasswordController.clear();
       } on FirebaseAuthException catch (e) {
         log("firebaseException: $e");
         switch (e.code) {
@@ -189,7 +187,7 @@ class Authentication {
         isSignUpPasswordError = false;
         isSignUpConfirmPasswordError = false;
         var currentUser = _auth.currentUser;
-        saveDataLocally(currentUser);
+        // saveDataLocally(currentUser);
         Map<String, dynamic> userInfo = {
           'displayName': signUpNameController.text,
           'email': signUpEmailController.text,
@@ -253,37 +251,37 @@ class Authentication {
     }
   }
 
-  void saveDataLocally(var currentUserInstance) {
+  void saveDataLocally(UserDataModel currentUserInstance) {
     var currentUser = currentUserInstance;
-    pref.storeStringData(UsersKey.currentUserKey, currentUser?.uid);
+    pref.storeStringData(UsersKey.currentUserKey, currentUser.uid);
     pref.storeObjectData(UsersKey.randomUserKey, {
-      'displayName': currentUser?.displayName,
-      'email': currentUser?.email,
-      'emailVerified': currentUser?.emailVerified,
-      'isAnonymous': currentUser?.isAnonymous,
-      'creationTime': currentUser?.metadata.creationTime?.toIso8601String(),
-      'lastSignInTime': currentUser?.metadata.lastSignInTime?.toIso8601String(),
-      'phoneNumber': currentUser?.phoneNumber,
-      'photoURL': currentUser?.photoURL,
-      'uid': currentUser?.uid,
-      'refreshToken': currentUser?.refreshToken,
-      'isDeleted': 0,
-      'instagram': '',
-      'website': '',
-      'contactCard': '',
-      "qrCode": '',
-      "coverURL": '',
-      "logoURL": '',
-      "jobTitle": '',
-      "companyName": '',
-      "address": '',
-      "bio": '',
-      "brandColor": '',
-      "cardTitle": '',
+      'displayName': currentUser.displayName,
+      'email': currentUser.email,
+      'emailVerified': currentUser.emailVerified,
+      'isAnonymous': "",
+      'creationTime': currentUser.created?.toIso8601String(),
+      'lastSignInTime': currentUser.lastSignInTime?.toIso8601String(),
+      'phoneNumber': currentUser.phoneNumber,
+      'photoURL': currentUser.photoUrl,
+      'uid': currentUser.uid,
+      'refreshToken': currentUser.uid,
+      'isDeleted': currentUser.isDeleted,
+      'instagram': currentUser.instagram,
+      'website': currentUser.website,
+      'contactCard': currentUser.contactCard,
+      "qrCode": currentUser.qrCode,
+      "coverURL": currentUser.coverUrl,
+      "logoURL": currentUser.logoUrl,
+      "jobTitle": currentUser.jobTitle,
+      "companyName": currentUser.companyName,
+      "address": currentUser.address,
+      "bio": currentUser.bio,
+      "brandColor": currentUser.brandColor,
+      "cardTitle": currentUser.cardTitle,
       "linkedIn": '',
-      'profileLink': ''
+      'profileLink': currentUser.profileLink
     }).then((value) {
-      log("Current Anonymous User Detail has been saved in Locally");
+      log("Current Anonymous User Detail has been saved in Locally from getDataFromFireStore");
     }).catchError((e) {
       // EasyLoading.dismiss();
       log("Error while saving Anonymous User Detail in Locally $e");
@@ -300,6 +298,7 @@ class Authentication {
         .then((value) {
       log("Successfully read current user data : $value");
       userModel = UserDataModel.fromJson(value!);
+      saveDataLocally(userModel);
       log("After Assign to UserDataModel,  read current user data : ${userModel.email}");
     }).catchError((e) {
       log("getDataFromFireStore error: $e");
@@ -397,9 +396,10 @@ class Authentication {
 
       /// data saved in firebase
       await addToFirebaseData(currentUser);
+      await getDataFromFireStore();
 
       /// data saved in shared preferences
-      saveDataLocally(currentUser);
+      // saveDataLocally(currentUser);
     }).catchError((e) {
       log("Google Sign in error : $e");
     });

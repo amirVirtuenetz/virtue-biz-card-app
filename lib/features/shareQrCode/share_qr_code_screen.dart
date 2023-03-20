@@ -6,6 +6,7 @@ import 'dart:ui';
 import 'package:biz_card/core/helpers/alert_message.dart';
 import 'package:biz_card/features/model/user_model.dart';
 import 'package:flutter/cupertino.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter/services.dart';
@@ -13,6 +14,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_share_me/flutter_share_me.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:gallery_saver/gallery_saver.dart';
+import 'package:go_router/go_router.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:qr_flutter/qr_flutter.dart';
 import 'package:screen_brightness/screen_brightness.dart';
@@ -24,6 +26,7 @@ import '../../core/helpers/app_colors.dart';
 import '../components/text_button.dart';
 import '../model/model.dart';
 import '../providers/user_provider.dart';
+import '../screens/widgets/share_class.dart';
 import 'components/list_tile_widget.dart';
 
 class ShareQRCodeScreen extends StatefulWidget {
@@ -61,7 +64,7 @@ class _ShareQRCodeScreenState extends State<ShareQRCodeScreen> {
     try {
       await ScreenBrightness().setScreenBrightness(brightness);
     } catch (e) {
-      print(e);
+      log("$e");
       throw 'Failed to set brightness';
     }
   }
@@ -89,7 +92,7 @@ class _ShareQRCodeScreenState extends State<ShareQRCodeScreen> {
       // final channel = const MethodChannel('channel:me.alfian.share/share');
       // channel.invokeMethod('shareFile', 'image.png');
     } catch (e) {
-      print("Error while sharing QR Code  : ${e.toString()}");
+      log("Error while sharing QR Code  : ${e.toString()}");
     }
   }
 
@@ -111,7 +114,7 @@ class _ShareQRCodeScreenState extends State<ShareQRCodeScreen> {
     try {
       await ScreenBrightness().resetScreenBrightness();
     } catch (e) {
-      print(e);
+      log("$e");
       throw 'Failed to reset brightness';
     }
   }
@@ -136,7 +139,12 @@ class _ShareQRCodeScreenState extends State<ShareQRCodeScreen> {
           offset: const Offset(5, 0),
           child: IconButton(
             onPressed: () {
-              Navigator.pop(context);
+              // GoRouter.of(context).backButtonDispatcher;
+              if (kIsWeb) {
+                context.go("/");
+              } else {
+                Navigator.pop(context);
+              }
             },
             icon: const Icon(FontAwesomeIcons.xmark),
           ),
@@ -270,7 +278,7 @@ class _ShareQRCodeScreenState extends State<ShareQRCodeScreen> {
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       const Text(
-                        "Copy Cod Link",
+                        "Copy Code Link",
                         style: TextStyle(
                           fontSize: 16,
                           fontWeight: FontWeight.w400,
@@ -278,13 +286,16 @@ class _ShareQRCodeScreenState extends State<ShareQRCodeScreen> {
                       ),
                       IconButton(
                         onPressed: () async {
-                          await Clipboard.setData(const ClipboardData(
-                                  text: "Your link has been saved"))
+                          final params = {"userId": "${userpro.userModel.uid}"};
+                          String link =
+                              "https://biz-card-9fa8a.web.app/cardScreen?${Uri(queryParameters: params)}";
+                          await Clipboard.setData(ClipboardData(text: link))
                               .then((value) {
-                            AlertMessage.successMessage("Card Link Copied");
+                            AlertMessage.successMessage(
+                                "Card Link Copied : $link");
                           });
                         },
-                        icon: Icon(Icons.copy),
+                        icon: const Icon(Icons.copy),
                       )
                     ],
                   ),
@@ -307,9 +318,9 @@ class _ShareQRCodeScreenState extends State<ShareQRCodeScreen> {
                       bottomRight: Radius.circular(1),
                     ),
                   ),
-                  child: Row(
+                  child: const Row(
                     mainAxisAlignment: MainAxisAlignment.start,
-                    children: const [
+                    children: [
                       Padding(
                         padding: EdgeInsets.only(right: 10),
                         child: Icon(Icons.wallet),
@@ -343,9 +354,9 @@ class _ShareQRCodeScreenState extends State<ShareQRCodeScreen> {
                       // color: Colors.grey.shade300,
                       borderRadius: BorderRadius.circular(1),
                     ),
-                    child: Row(
+                    child: const Row(
                       mainAxisAlignment: MainAxisAlignment.start,
-                      children: const [
+                      children: [
                         Padding(
                           padding: EdgeInsets.only(right: 10),
                           child: Icon(Icons.qr_code),
@@ -400,7 +411,10 @@ class _ShareQRCodeScreenState extends State<ShareQRCodeScreen> {
                       SizedBox(
                         width: 40,
                         height: 30,
-                        child: Switch(
+                        child: CupertinoSwitch(
+                            thumbColor: Colors.white,
+                            trackColor: Colors.grey.shade300,
+                            activeColor: Colors.green,
                             value: isInternet,
                             onChanged: (val) {
                               setState(() {
@@ -411,7 +425,7 @@ class _ShareQRCodeScreenState extends State<ShareQRCodeScreen> {
                     ],
                   ),
                 ),
-                SizedBox(
+                const SizedBox(
                   height: 20,
                 ),
 
@@ -628,10 +642,9 @@ class _ShareQRCodeScreenState extends State<ShareQRCodeScreen> {
   }
 
   shareOtherWay() async {
-    final box = context.findRenderObject() as RenderBox?;
-    // Share.share('https://bizCard.co/flutter/QRCcode12455',
-    //     subject: "Scan QR Code",
-    //     sharePositionOrigin: box!.localToGlobal(Offset.zero) & box.size);
+    await capture().then((value) {
+      ShareClass.shareOnOtherWay(file!.path);
+    });
   }
 }
 

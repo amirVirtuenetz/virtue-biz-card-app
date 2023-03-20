@@ -7,8 +7,6 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_database/firebase_database.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 
-import '../../core/helpers/key_constant.dart';
-
 class FirebaseServices {
   static final FirebaseFirestore _firestore = FirebaseFirestore.instance;
   final DatabaseReference databaseReference = FirebaseDatabase.instance.ref();
@@ -85,19 +83,26 @@ class FirebaseServices {
     return snapshot.data();
   }
 
+  Future<bool> checkIfDocumentExists(String documentId) async {
+    DocumentSnapshot snapshot =
+        await _firestore.collection('users').doc(documentId).get();
+    return snapshot.exists;
+  }
+
   static Future<void> addData(
       String collectionName, var documentId, Map<String, dynamic> data) async {
     await _firestore.collection(collectionName).doc(documentId).set(data);
   }
 
   /// for subCollection Data
-  static Future<void> addDataToSubCollection(
-      String collectionName, documentId, Map<String, dynamic> data) async {
+  static Future<void> addDataToSubCollection(String collectionName, documentId,
+      String subCollectionName, Map<String, dynamic> data,
+      {String? subDocumentId}) async {
     await _firestore
         .collection(collectionName)
         .doc(documentId)
-        .collection(UsersKey.subCollection)
-        .doc()
+        .collection(subCollectionName)
+        .doc(subDocumentId)
         .set(data)
         .then((value) {
       log("Data added to subCollection : ");
@@ -105,31 +110,36 @@ class FirebaseServices {
     // await _firestore.collection(collectionName).doc(documentId).set(data);
   }
 
-  static fetchSubCollectionData(
+  static Stream<QuerySnapshot<Object?>>? fetchSubCollectionData(
       {required String collectionName,
       required String id,
-      required String subCollectionName}) async {
-    var list;
-    await _firestore
+      required String subCollectionName}) {
+    // var list;
+    return _firestore
         .collection(collectionName)
         .doc(id)
         .collection(subCollectionName)
-        .get()
-        .then((value) => {
-              if (value.docs.isNotEmpty) {list = value.docs}
-            });
+        .where("isDeleted", isEqualTo: 0)
+        .snapshots();
+    // .then((value) => {
+    //       if (value.docs.isNotEmpty) {list = value.docs}
+    //     });
     // await _firestore.collection(collectionName).doc(id).get().then((value) => {
     //       if (value.exists) {list = value.data()}
     //     });
-    return list;
+    // return list;
   }
 
-  static Future<dynamic> updateSubCollectionData(String collectionRef,
-      var documentId, var subDocumentId, Map<String, dynamic> data) async {
+  static Future<dynamic> updateSubCollectionData(
+      String collectionRef,
+      var documentId,
+      var subDocumentId,
+      String subCollectionName,
+      Map<String, dynamic> data) async {
     return await _firestore
         .collection(collectionRef)
         .doc(documentId)
-        .collection(UsersKey.subCollection)
+        .collection(subCollectionName)
         .doc(subDocumentId)
         .update(data);
   }
@@ -191,7 +201,7 @@ class FirebaseServices {
       final FirebaseStorage firebaseStorage = FirebaseStorage.instance;
       var fileName = image.path.split('/').last;
       log('file name: $fileName');
-      final metadata = SettableMetadata(contentType: "image/jpeg");
+      final metadata = SettableMetadata(contentType: "image/png");
 
       var snapshot = await firebaseStorage
           .ref()

@@ -6,6 +6,7 @@ import 'package:http/http.dart' as http;
 
 import '../../core/helpers/alert_message.dart';
 import '../../core/helpers/auth_enum.dart';
+import '../../core/helpers/key_constant.dart';
 import '../services/firebase_services.dart';
 import '../services/shared_preference.dart';
 
@@ -23,7 +24,7 @@ class LinkStoreModuleClass {
     // list.add(item);
     var data = {"list": item};
     await FirebaseServices.addDataToSubCollection(
-            "users", _auth.currentUser!.uid, item)
+            "users", _auth.currentUser!.uid, UsersKey.subCollection, item)
         .then((value) {
       AlertMessage.successMessage("data added");
     }).catchError((e) {
@@ -52,7 +53,7 @@ class LinkStoreModuleClass {
 
   updateLink({required SocialLinkTypes type}) async {
     switch (type) {
-      case SocialLinkTypes.number:
+      case SocialLinkTypes.Number:
         if (controller.text.trim().isEmpty) {
           AlertMessage.warningMessage("Please enter your phone number");
         } else {
@@ -64,7 +65,7 @@ class LinkStoreModuleClass {
             addListData({
               'created': DateTime.now().toIso8601String(),
               'updated': '',
-              'phoneNumber': controller.text,
+              'data': controller.text,
               'type': "number",
             });
             controller.clear();
@@ -72,7 +73,7 @@ class LinkStoreModuleClass {
           });
         }
         break;
-      case SocialLinkTypes.email:
+      case SocialLinkTypes.Email:
         if (controller.text.trim().isEmpty) {
           AlertMessage.warningMessage("Please enter your email address");
         } else {
@@ -84,7 +85,7 @@ class LinkStoreModuleClass {
             addListData({
               'created': DateTime.now().toIso8601String(),
               'updated': '',
-              'email': controller.text,
+              'data': controller.text,
               'type': "email",
             });
             controller.clear();
@@ -92,7 +93,7 @@ class LinkStoreModuleClass {
           });
         }
         break;
-      case SocialLinkTypes.instagram:
+      case SocialLinkTypes.Instagram:
         if (controller.text.trim().isEmpty) {
           AlertMessage.warningMessage("Please enter your instagram username");
         } else {
@@ -105,7 +106,7 @@ class LinkStoreModuleClass {
             addListData({
               'created': DateTime.now().toIso8601String(),
               'updated': '',
-              'instagram': controller.text,
+              'data': username,
               'type': "instagram",
             });
             controller.clear();
@@ -114,7 +115,7 @@ class LinkStoreModuleClass {
         }
 
         break;
-      case SocialLinkTypes.website:
+      case SocialLinkTypes.Website:
         if (controller.text.trim().isEmpty) {
           AlertMessage.warningMessage("Please enter your website link");
         } else {
@@ -129,7 +130,7 @@ class LinkStoreModuleClass {
               addListData({
                 'created': DateTime.now().toIso8601String(),
                 'updated': '',
-                'website': controller.text,
+                'data': controller.text,
                 'type': "website",
               });
               controller.clear();
@@ -141,7 +142,7 @@ class LinkStoreModuleClass {
           }
         }
         break;
-      case SocialLinkTypes.linkedIn:
+      case SocialLinkTypes.LinkedIn:
         Map<String, dynamic> userInfo = {
           'updated': DateTime.now().toIso8601String(),
           'linkedIn': controller.text,
@@ -150,14 +151,14 @@ class LinkStoreModuleClass {
           addListData({
             'created': DateTime.now().toIso8601String(),
             'updated': '',
-            'linkedIn': controller.text,
+            'data': controller.text,
             'type': "linkedIn",
           });
           controller.clear();
           AlertMessage.successMessage("Your linkedIn url has been added");
         });
         break;
-      case SocialLinkTypes.contactCard:
+      case SocialLinkTypes.ContactCard:
         Map<String, dynamic> userInfo = {
           'updated': DateTime.now().toIso8601String(),
           'contactCard': controller.text,
@@ -166,7 +167,7 @@ class LinkStoreModuleClass {
           addListData({
             'created': DateTime.now().toIso8601String(),
             'updated': '',
-            'contactCard': controller.text,
+            'data': controller.text,
             'type': "contactCard",
           });
           controller.clear();

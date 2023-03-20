@@ -78,8 +78,6 @@ class _AddLinkCardScreenState extends State<AddLinkCardScreen> {
                           print(subject); //output: Hello%20Flutter
                           Uri mail = Uri.parse(
                               "mailto:$email?subject=$subject&body=$body");
-                          var uri =
-                              'mailto:${linkProvider.controller.text}?subject=Greetings&body=Hello%20World';
                           if (await canLaunchUrl(mail)) {
                             await launchUrl(mail);
                           } else {
@@ -89,7 +87,6 @@ class _AddLinkCardScreenState extends State<AddLinkCardScreen> {
                           if (Platform.isAndroid) {
                             var url = linkProvider.controller.text;
                             if (url.startsWith("https://www.facebook.com/")) {
-                              final url2 = "fb://facewebmodal/f?href=$url";
                               // final intent2 = AndroidIntent(action: "action_view", data: url2);
                               // final canWork = await intent2.canResolveActivity();
                               // if (canWork) return intent2.launch();
@@ -99,8 +96,9 @@ class _AddLinkCardScreenState extends State<AddLinkCardScreen> {
                           } else {
                             if (await canLaunchUrl(
                                 Uri.parse(linkProvider.controller.text))) {
-                              await launch(linkProvider.controller.text,
-                                  forceSafariVC: false);
+                              await launchUrl(
+                                Uri.parse(linkProvider.controller.text),
+                              );
                             } else {
                               throw "Could not launch ${linkProvider.controller.text}";
                             }
@@ -159,14 +157,14 @@ class _AddLinkCardScreenState extends State<AddLinkCardScreen> {
                   child: TextField(
                     controller: linkProvider.controller,
                     keyboardType: widget.data!.linkType ==
-                            SocialLinkTypes.number
+                            SocialLinkTypes.Number
                         ? TextInputType.phone
-                        : widget.data!.linkType == SocialLinkTypes.email
+                        : widget.data!.linkType == SocialLinkTypes.Email
                             ? TextInputType.emailAddress
-                            : widget.data!.linkType == SocialLinkTypes.website
+                            : widget.data!.linkType == SocialLinkTypes.Website
                                 ? TextInputType.url
                                 : widget.data!.linkType ==
-                                        SocialLinkTypes.instagram
+                                        SocialLinkTypes.Instagram
                                     ? TextInputType.name
                                     : TextInputType.text,
                     style: const TextStyle(

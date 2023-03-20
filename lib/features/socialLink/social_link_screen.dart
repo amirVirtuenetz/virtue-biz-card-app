@@ -19,32 +19,32 @@ class _SocialLinkScreenState extends State<SocialLinkScreen> {
     RecommendedLink(
         title: "Number",
         leadingIcon: FontAwesomeIcons.phone,
-        linkType: SocialLinkTypes.number,
+        linkType: SocialLinkTypes.Number,
         hintText: "Phone Number"),
     RecommendedLink(
         title: "Email",
         leadingIcon: FontAwesomeIcons.envelope,
-        linkType: SocialLinkTypes.email,
+        linkType: SocialLinkTypes.Email,
         hintText: "Email Address"),
     RecommendedLink(
         title: "Instagram",
         leadingIcon: FontAwesomeIcons.instagram,
-        linkType: SocialLinkTypes.instagram,
+        linkType: SocialLinkTypes.Instagram,
         hintText: "Instagram username"),
     RecommendedLink(
         title: "Website",
         leadingIcon: Icons.web_sharp,
-        linkType: SocialLinkTypes.website,
+        linkType: SocialLinkTypes.Website,
         hintText: "Website Link"),
     RecommendedLink(
         title: "LinkedIn",
         leadingIcon: FontAwesomeIcons.linkedin,
-        linkType: SocialLinkTypes.linkedIn,
+        linkType: SocialLinkTypes.LinkedIn,
         hintText: "LinkedIn profile link"),
     RecommendedLink(
         title: "Contact Card",
         leadingIcon: Icons.confirmation_number_outlined,
-        linkType: SocialLinkTypes.contactCard,
+        linkType: SocialLinkTypes.ContactCard,
         hintText: "contact Card"),
   ];
 
@@ -84,7 +84,7 @@ class _SocialLinkScreenState extends State<SocialLinkScreen> {
     RecommendedLink(title: "Custom link", leadingIcon: FontAwesomeIcons.link),
     RecommendedLink(title: "Linktree", leadingIcon: FontAwesomeIcons.tree),
     RecommendedLink(title: "Telegram", leadingIcon: FontAwesomeIcons.telegram),
-    RecommendedLink(title: "OnlyFans", leadingIcon: FontAwesomeIcons.lock),
+    // RecommendedLink(title: "OnlyFans", leadingIcon: FontAwesomeIcons.lock),
     RecommendedLink(
         title: "Poshmark", leadingIcon: Icons.published_with_changes_sharp),
     RecommendedLink(title: "Podcasts", leadingIcon: FontAwesomeIcons.podcast),

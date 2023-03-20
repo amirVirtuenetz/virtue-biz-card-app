@@ -8,8 +8,11 @@
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
 
     <queries>
+        <!-- Place inside the <queries> element. -->
         <intent>
             <action android:name="android.intent.action.VIEW" />
+<!--            <category android:name="android.intent.category.DEFAULT"/>-->
+            <category android:name="android.intent.category.BROWSABLE" />
             <data android:scheme="https" />
         </intent>
         <intent>
@@ -17,9 +20,14 @@
             <data android:scheme="tel" />
         </intent>
         <intent>
+            <action android:name="android.intent.action.VIEW" />
+            <data android:scheme="sms" />
+        </intent>
+        <intent>
             <action android:name="android.intent.action.SEND" />
             <data android:mimeType="*/*" />
         </intent>
+
     </queries>
    <application
         android:label="biz_card"

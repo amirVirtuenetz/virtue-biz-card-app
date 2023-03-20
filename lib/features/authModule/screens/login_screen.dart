@@ -84,9 +84,6 @@ class _LoginScreenState extends State<LoginScreen> {
                 if (!_formKey.currentState!.validate()) {
                   return;
                 }
-                // print(_email.text); // This are your best friend for debugging things
-                //  not to mention the debugging tools
-                // print(_password.text);
                 if (type == Status.login) {
                   loading();
                   await auth

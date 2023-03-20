@@ -1,54 +1,53 @@
+import 'dart:async';
 import 'dart:convert';
 import 'dart:developer';
 import 'dart:io';
+import 'dart:ui';
 
+import 'package:biz_card/features/providers/user_provider.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/rendering.dart';
+import 'package:flutter/services.dart';
+import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
+import 'package:path_provider/path_provider.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../model/user_model.dart';
 
-class QRCodeScannerScreen extends StatefulWidget {
-  const QRCodeScannerScreen({Key? key}) : super(key: key);
+class QRCodeScannerScreens extends StatefulWidget {
+  const QRCodeScannerScreens({Key? key}) : super(key: key);
 
   @override
-  _QRCodeScannerScreenState createState() => _QRCodeScannerScreenState();
+  _QRCodeScannerScreensState createState() => _QRCodeScannerScreensState();
 }
 
-class _QRCodeScannerScreenState extends State<QRCodeScannerScreen>
+class _QRCodeScannerScreensState extends State<QRCodeScannerScreens>
     with SingleTickerProviderStateMixin {
+  // late StreamSubscription _subs;
+  GlobalKey globalKey = GlobalKey();
   BarcodeCapture? barcode;
 
   final MobileScannerController controller = MobileScannerController(
     torchEnabled: false, formats: [BarcodeFormat.all],
-
     // facing: CameraFacing.front,
     // detectionSpeed: DetectionSpeed.normal
     // detectionTimeoutMs: 1000,
-    // returnImage: false,
+    returnImage: true,
   );
   File? qrImage;
   bool isStarted = true;
 
-  void _startOrStop() {
-    try {
-      if (isStarted) {
-        controller.stop();
-      } else {
-        controller.start();
-      }
-      setState(() {
-        isStarted = !isStarted;
-      });
-    } on Exception catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Something went wrong! $e'),
-          backgroundColor: Colors.red,
-        ),
-      );
-    }
+  @override
+  void initState() {
+    super.initState();
+  }
+
+  @override
+  void dispose() {
+    super.dispose();
+    controller.dispose();
   }
 
   void pickImageFromGallery() async {
@@ -58,7 +57,6 @@ class _QRCodeScannerScreenState extends State<QRCodeScannerScreen>
         source: ImageSource.gallery,
       );
       if (image != null) {
-        // launchInBrowser(Uri.parse("https://www.google.com"));
         log("Image  abs: ${image.path}");
         if (await controller.analyzeImage(image.path)) {
           setState(() {
@@ -91,10 +89,15 @@ class _QRCodeScannerScreenState extends State<QRCodeScannerScreen>
     if (await canLaunchUrl(
       url,
     )) {
-      await launchUrl(
-        url,
-        mode: LaunchMode.externalApplication,
-      );
+      Map<String, String> headers = {
+        'Access-Control-Allow-Origin': '*',
+        "Access-Control-Allow-Headers":
+            'Origin, X-Requested-With, Content-Type, Accept',
+        'Permissions-Policy': 'interest-cohort=()',
+      };
+      await launchUrl(url,
+          mode: LaunchMode.externalApplication,
+          webViewConfiguration: WebViewConfiguration(headers: headers));
     } else {
       throw Exception('Could not launch $url');
     }
@@ -102,34 +105,57 @@ class _QRCodeScannerScreenState extends State<QRCodeScannerScreen>
 
   @override
   Widget build(BuildContext context) {
+    SystemChrome.setSystemUIOverlayStyle(SystemUiOverlayStyle.light);
     return Scaffold(
       backgroundColor: Colors.black,
-      body: Builder(
-        builder: (context) {
+      body: SafeArea(
+        child: Consumer(builder: (context, ref, _) {
+          final userRef = ref.watch(userProvider);
+          log("user provider: ${userRef.userModel.uid}");
+
           return Stack(
             children: [
-              MobileScanner(
-                controller: controller,
-                errorBuilder: (context, error, child) {
-                  return Center(
-                    child: Text("Error: ${error.errorDetails}"),
-                  );
-                },
-                fit: BoxFit.cover,
-                onDetect: (barcode) async {
-                  setState(() {
-                    this.barcode = barcode;
-                    log("Bar Code Detail: ${barcode.barcodes.first.rawValue}");
-                  });
-                  Map<String, dynamic> jsonMap =
-                      jsonDecode("${barcode.barcodes.first.rawValue}");
-                  // barcode.barcodes.first.rawBytes.toString()
-                  var userData = UserDataModel.fromJson(jsonMap);
-                  log("jsonMap Type: $userData");
-                  log("Link url : ${jsonMap['profileLink']}");
-                  String link = "https://amirvirtuenetz.github.io";
-                  launchInBrowser(Uri.parse(link));
-                },
+              RepaintBoundary(
+                key: globalKey,
+                child: MobileScanner(
+                  controller: controller,
+                  errorBuilder: (context, error, child) {
+                    return Center(
+                      child: Text("Error: ${error.errorDetails}"),
+                    );
+                  },
+                  fit: BoxFit.cover,
+                  onDetect: (barcode) async {
+                    setState(() {
+                      this.barcode = barcode;
+                      log("Bar Code Detail: ${barcode.barcodes.first.rawValue}");
+                    });
+                    Map<String, dynamic> jsonMap =
+                        jsonDecode("${barcode.barcodes.first.rawValue}");
+                    // barcode.barcodes.first.rawBytes.toString()
+                    var userData = UserDataModel.fromJson(jsonMap);
+                    log("jsonMap Type: ${userData.uid}");
+                    // log("Link url : ${jsonMap['profileLink']}");
+                    // GoRouter.of(context).go("https://amirvirtuenetz.github.io");
+                    // GoRouter.of(context).goNamed('/cardScreen',
+                    //     params: {"userId": "${userData.uid}"});
+                    // context.goNamed("cardScreen",
+                    //     params: {"userId": "${userData.uid}"});
+                    final params = {"userId": "${userData.uid}"};
+                    String link =
+                        "https://biz-card-9fa8a.web.app/cardScreen?${Uri(queryParameters: params)}";
+                    // log(link);
+                    userRef
+                        .addContactCard(
+                            userData.uid.toString(), userData.toJson())
+                        .then((value) {
+                      log("contact card has been saved");
+                      launchInBrowser(Uri.parse(link));
+                    }).catchError((e) {
+                      log("Error while add contact card in firbase subCollection");
+                    });
+                  },
+                ),
               ),
               Positioned(
                 bottom: 40,
@@ -171,54 +197,6 @@ class _QRCodeScannerScreenState extends State<QRCodeScannerScreen>
                     ),
 
                     ///
-                    // IconButton(
-                    //   color: Colors.white,
-                    //   icon: const Icon(Icons.image),
-                    //   iconSize: 32.0,
-                    //   onPressed: () async {
-                    //     final ImagePicker picker = ImagePicker();
-                    //     final XFile? image = await picker.pickImage(
-                    //       source: ImageSource.gallery,
-                    //     );
-                    //     if (image != null) {
-                    //       if (await controller.analyzeImage(image.path)) {
-                    //         if (!mounted) return;
-                    //         ScaffoldMessenger.of(context).showSnackBar(
-                    //           const SnackBar(
-                    //             content: Text('QR Code Found!'),
-                    //             backgroundColor: Colors.green,
-                    //           ),
-                    //         );
-                    //       } else {
-                    //         if (!mounted) return;
-                    //         ScaffoldMessenger.of(context).showSnackBar(
-                    //           const SnackBar(
-                    //             content: Text('No qrcode found!'),
-                    //             backgroundColor: Colors.red,
-                    //           ),
-                    //         );
-                    //       }
-                    //     }
-                    //   },
-                    // ),
-                    ///
-                    // Center(
-                    //   child: SizedBox(
-                    //     width: MediaQuery.of(context).size.width - 200,
-                    //     height: 50,
-                    //     child: FittedBox(
-                    //       child: Text(
-                    //         // barcode?.barcodes.first.rawValue ??
-                    //         'Scan qrcode!',
-                    //         overflow: TextOverflow.fade,
-                    //         style: Theme.of(context)
-                    //             .textTheme
-                    //             .headlineMedium!
-                    //             .copyWith(color: Colors.white),
-                    //       ),
-                    //     ),
-                    //   ),
-                    // ),
                     IconButton(
                       color: Colors.white,
                       icon: isStarted
@@ -244,7 +222,7 @@ class _QRCodeScannerScreenState extends State<QRCodeScannerScreen>
                                   color: Colors.grey,
                                 );
                               }
-                              switch (state as TorchState) {
+                              switch (state) {
                                 case TorchState.off:
                                   return const Icon(
                                     Icons.flash_off,
@@ -290,8 +268,74 @@ class _QRCodeScannerScreenState extends State<QRCodeScannerScreen>
               ),
             ],
           );
-        },
+        }),
       ),
     );
+  }
+
+  void _startOrStop() {
+    try {
+      if (isStarted) {
+        controller.stop();
+      } else {
+        controller.start();
+      }
+      setState(() {
+        isStarted = !isStarted;
+      });
+      _captureAndSharePng();
+    } on Exception catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Something went wrong! $e'),
+          backgroundColor: Colors.red,
+        ),
+      );
+    }
+  }
+
+  Future<void> _captureAndSharePng() async {
+    try {
+      RenderRepaintBoundary boundary =
+          globalKey.currentContext?.findRenderObject() as RenderRepaintBoundary;
+      var image = await boundary.toImage();
+      ByteData? byteData = await image.toByteData(format: ImageByteFormat.png);
+      Uint8List pngBytes = byteData!.buffer.asUint8List();
+
+      final tempDir = await getTemporaryDirectory();
+      final file = await File('${tempDir.path}/image.png').create();
+      var myImage = await file.writeAsBytes(pngBytes);
+      log("File in ABC: $myImage");
+      if (myImage.path.isNotEmpty) {
+        log("Image  abs: ${myImage.path}");
+        if (await controller.analyzeImage(myImage.path)) {
+          setState(() {
+            qrImage = File(myImage.path);
+          });
+          if (!mounted) return;
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('QR Code Found!'),
+              backgroundColor: Colors.green,
+            ),
+          );
+        } else {
+          if (!mounted) return;
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('No qrcode found!'),
+              backgroundColor: Colors.red,
+            ),
+          );
+        }
+      }
+
+      // Share.shareXFiles([XFile(ed.path)],
+      //     text: 'Please Scan QR Code', subject: "Scan QR Code");
+      // final channel = const MethodChannel('channel:me.alfian.share/share');
+      // channel.invokeMethod('shareFile', 'image.png');
+    } catch (e) {
+      print("Error while sharing QR Code  : ${e.toString()}");
+    }
   }
 }

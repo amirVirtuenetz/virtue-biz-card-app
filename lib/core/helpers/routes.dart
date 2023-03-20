@@ -1,14 +1,16 @@
 import 'dart:developer';
 
+import 'package:biz_card/features/authModule/screens/login_screen.dart';
+import 'package:biz_card/features/shareQrCode/share_qr_code_screen.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../features/authModule/auth_checker.dart';
 import '../../features/bottomNavBar/bottom_nav_bar.dart';
 import '../../features/cardTemplate/business_card_screen.dart';
 import '../../features/defaultsScreen/error_screen.dart';
-import '../../main.dart';
 
 final firebaseInitializerProvider = FutureProvider<FirebaseApp>((ref) async {
   return await Firebase.initializeApp();
@@ -21,11 +23,14 @@ class AppRoute {
         name: "home",
         path: "/",
         builder: (context, state) {
-          return App();
+          return const AuthChecker();
         },
         redirect: (context, redirect) {
+          // final redirectPath = context.read(redirectPathProvider);
           return redirectPathProvider.name;
         },
+
+        ///
         // redirect: (BuildContext context, state) {
         //   final initialize = context.read(firebaseInitializerProvider);
         //   initialize.when(
@@ -53,6 +58,18 @@ class AppRoute {
         // ],
       ),
       GoRoute(
+          path: "/login",
+          name: "login",
+          builder: (context, state) {
+            return const LoginScreen();
+          }),
+      GoRoute(
+          path: "/signUp",
+          name: "signUp",
+          builder: (context, state) {
+            return const LoginScreen();
+          }),
+      GoRoute(
           name: "dashboard",
           path: "/dashboard",
           builder: (context, state) {
@@ -60,16 +77,23 @@ class AppRoute {
           }),
       GoRoute(
         name: "cardScreen",
-        path: "/cardScreen:userId",
+        path: "/cardScreen",
         // path: "/cardScreen",
         builder: (context, state) {
-          log("Data : ${state.params}");
+          String userId = '';
+          // final userId = state.params['userId'];
           state.queryParams.forEach((key, value) {
-            log("Key: $key  Value : $value");
+            log("value: ${value}");
+            userId = value;
           });
+          log("userId : $userId");
+          // state.queryParams.forEach((key, value) {
+          //   log("Key: $key  Value : $value");
+          // });
           return BusinessCardTemplate(
             isSocialColorEnabled: true,
             color: Colors.blueAccent,
+            userId: userId,
             // userData: UserDataModel(
             //     displayName: "Amir Nazir",
             //     email: "amirVirtuenetz@gmail.com",
@@ -85,6 +109,13 @@ class AppRoute {
             //         "https://fastly.picsum.photos/id/1081/200/300.jpg?hmac=ntCnXquH7cpEF0vi5yvz1wKAlRyd2EZwZJQbgtfknu8"),
             // data: state.params["name"],
           );
+        },
+      ),
+      GoRoute(
+        path: "/shareQRCodeScreen",
+        name: "shareQRCodeScreen",
+        builder: (context, state) {
+          return const ShareQRCodeScreen();
         },
       ),
     ],

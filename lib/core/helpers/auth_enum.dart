@@ -6,10 +6,10 @@ enum Status {
 enum ImageTypes { coverImage, profileImage, logoImage }
 
 enum SocialLinkTypes {
-  number,
-  email,
-  instagram,
-  website,
-  linkedIn,
-  contactCard
+  Number,
+  Email,
+  Instagram,
+  Website,
+  LinkedIn,
+  ContactCard
 }

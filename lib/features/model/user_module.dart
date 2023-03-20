@@ -5,8 +5,11 @@ import 'package:biz_card/features/model/user_model.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:google_sign_in/google_sign_in.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:share_plus/share_plus.dart' as sharePlus;
+import 'package:url_launcher/url_launcher.dart';
 
 import '../../core/helpers/alert_message.dart';
 import '../../core/helpers/auth_enum.dart';
@@ -14,6 +17,7 @@ import '../../core/helpers/key_constant.dart';
 import '../services/firebase_services.dart';
 import '../services/shared_preference.dart';
 import '../shareQrCode/share_qr_code_screen.dart';
+// import '../shareQrCode/share_qr_code_screen.dart';
 
 class BoolProvider extends StateNotifier<bool> {
   BoolProvider({getbool = false}) : super(getbool);
@@ -22,14 +26,18 @@ class BoolProvider extends StateNotifier<bool> {
   }
 }
 
-class UserModule {
+final boolProvider =
+    StateNotifierProvider<BoolProvider, bool>((ref) => BoolProvider());
+
+class UserModule extends ChangeNotifier {
   final FirebaseAuth _auth = FirebaseAuth.instance;
   final SharePreferencesClass pref = SharePreferencesClass();
-
+  bool isLoading = false;
   var newSwitch =
       StateNotifierProvider<BoolProvider, bool>((ref) => BoolProvider());
 
   Stream<User?> get authStateChange => _auth.authStateChanges();
+  final GoogleSignIn _googleSignIn = GoogleSignIn();
 
   /// textEditingController
   final TextEditingController cardTitleController = TextEditingController();
@@ -92,51 +100,46 @@ class UserModule {
   }
 
   /// get subCollection   data from fire store firebase
-  getSubCollectionData() {
+  Stream<QuerySnapshot<Object?>>? getSubCollectionData() {
     // var data = FirebaseServices.getDocumentStream(_auth.currentUser?.uid);
     var data = FirebaseServices.fetchSubCollectionData(
         collectionName: "users",
         id: _auth.currentUser!.uid,
         subCollectionName: UsersKey.subCollection);
-    // log("subCollection Functions : ${data}");
     return data;
-    // FirebaseFirestore.instance
-    //   .collection('users')
-    //   .doc(userModel.uid)
-    //   .snapshots();
   }
 
-  void saveDataLocally(var currentUserInstance) {
+  void saveDataLocally(UserDataModel currentUserInstance) {
     var currentUser = currentUserInstance;
-    pref.storeStringData(UsersKey.currentUserKey, currentUser?.uid);
+    pref.storeStringData(UsersKey.currentUserKey, currentUser.uid);
     pref.storeObjectData(UsersKey.randomUserKey, {
-      'displayName': currentUser?.displayName,
-      'email': currentUser?.email,
-      'emailVerified': currentUser?.emailVerified,
-      'isAnonymous': currentUser?.isAnonymous,
-      'creationTime': currentUser?.metadata.creationTime?.toIso8601String(),
-      'lastSignInTime': currentUser?.metadata.lastSignInTime?.toIso8601String(),
-      'phoneNumber': currentUser?.phoneNumber,
-      'photoURL': currentUser?.photoURL,
-      'uid': currentUser?.uid,
-      'refreshToken': currentUser?.refreshToken,
-      'isDeleted': 0,
-      'instagram': '',
-      'website': '',
-      'contactCard': '',
-      "qrCode": '',
-      "coverURL": '',
-      "logoURL": '',
-      "jobTitle": '',
-      "companyName": '',
-      "address": '',
-      "bio": '',
-      "brandColor": '',
-      "cardTitle": '',
+      'displayName': currentUser.displayName,
+      'email': currentUser.email,
+      'emailVerified': currentUser.emailVerified,
+      'isAnonymous': "",
+      'creationTime': currentUser.created?.toIso8601String(),
+      'lastSignInTime': currentUser.lastSignInTime?.toIso8601String(),
+      'phoneNumber': currentUser.phoneNumber,
+      'photoURL': currentUser.photoUrl,
+      'uid': currentUser.uid,
+      'refreshToken': currentUser.uid,
+      'isDeleted': currentUser.isDeleted,
+      'instagram': currentUser.instagram,
+      'website': currentUser.website,
+      'contactCard': currentUser.contactCard,
+      "qrCode": currentUser.qrCode,
+      "coverURL": currentUser.coverUrl,
+      "logoURL": currentUser.logoUrl,
+      "jobTitle": currentUser.jobTitle,
+      "companyName": currentUser.companyName,
+      "address": currentUser.address,
+      "bio": currentUser.bio,
+      "brandColor": currentUser.brandColor,
+      "cardTitle": currentUser.cardTitle,
       "linkedIn": '',
-      'profileLink': ''
+      'profileLink': currentUser.profileLink
     }).then((value) {
-      log("Current Anonymous User Detail has been saved in Locally");
+      log("Current Anonymous User Detail has been saved in Locally from getDataFromFireStore");
     }).catchError((e) {
       // EasyLoading.dismiss();
       log("Error while saving Anonymous User Detail in Locally $e");
@@ -151,14 +154,20 @@ class UserModule {
   /// end save data locally
   /// get data from fireStore database
   Future<void> getDataFromFireStore() async {
+    isLoading = true;
+    log("isLoading isLoading : $isLoading");
     await FirebaseServices.readDocumentData("users", _auth.currentUser!.uid)
         .then((value) {
       log("Successfully read current user data : $value");
       userModel = UserDataModel.fromJson(value!);
-      log("After Assign to UserDataModel,  read current user data : ${userModel.cardTitle}");
+      saveDataLocally(userModel);
+      isLoading = false;
+      log("isLoading isLoading : $isLoading");
     }).catchError((e) {
       log("getDataFromFireStore error: $e");
+      isLoading = false;
     });
+    notifyListeners();
   }
 
   Future<void> updateUserData() async {
@@ -216,9 +225,10 @@ class UserModule {
             AlertMessage.showLoading();
             await FirebaseServices.updateData(
                     'users', currentUser?.uid, {"coverURL": coverImageString})
-                .then((value) {
+                .then((value) async {
               AlertMessage.successMessage(
                   "Image has been updated in fireStore");
+              await getDataFromFireStore();
               log("Successfully updated: ");
             }).catchError((e) {
               AlertMessage.dismissLoading();
@@ -240,9 +250,10 @@ class UserModule {
             AlertMessage.showLoading();
             await FirebaseServices.updateData(
                     'users', currentUser?.uid, {"photoURL": profileImageString})
-                .then((value) {
+                .then((value) async {
               AlertMessage.successMessage(
                   "Image has been updated in fireStore");
+              await getDataFromFireStore();
               log("Successfully updated: ");
             }).catchError((e) {
               AlertMessage.dismissLoading();
@@ -264,9 +275,10 @@ class UserModule {
             AlertMessage.showLoading();
             await FirebaseServices.updateData(
                     'users', currentUser?.uid, {"logoURL": logoImageString})
-                .then((value) {
+                .then((value) async {
               AlertMessage.successMessage(
                   "Image has been updated in fireStore");
+              await getDataFromFireStore();
               log("Successfully updated: ");
             }).catchError((e) {
               AlertMessage.dismissLoading();
@@ -301,9 +313,97 @@ class UserModule {
       Navigator.push(
         context,
         MaterialPageRoute(
-          builder: (context) => ShareQRCodeScreen(),
+          builder: (context) => const ShareQRCodeScreen(),
         ),
       );
     }).catchError((e) {});
+  }
+
+  /// open links
+  Future<void> openLink(var data) async {
+    if (data.contains("@gmail")) {
+      String email = Uri.encodeComponent(data);
+      String subject = Uri.encodeComponent("Hello Flutter");
+      String body = Uri.encodeComponent("Hi! I'm Flutter Developer");
+      Uri mail = Uri.parse("mailto:$email?subject=$subject&body=$body");
+      if (await canLaunchUrl(mail)) {
+        await launchUrl(mail, mode: LaunchMode.externalNonBrowserApplication);
+      } else {
+        throw 'Could not launch $mail';
+      }
+    } else {
+      var url = data;
+      if (url.contains("https")) {
+        log("URL : $url");
+        if (await canLaunchUrl(Uri.parse(url))) {
+          await launchUrl(Uri.parse(url), mode: LaunchMode.externalApplication);
+        } else {
+          throw 'Could not launch $url';
+        }
+      } else {
+        log("Number : $data");
+        Uri phoneno = Uri.parse('tel:$data');
+        if (await launchUrl(phoneno)) {
+          await launchUrl(phoneno, mode: LaunchMode.externalApplication);
+        } else {
+          throw 'Number cannot be open';
+        }
+      }
+    }
+  }
+
+  /// LOG  OUT
+  Future<void> signOutGoogle() async {
+    await _googleSignIn.signOut();
+    await _auth.signOut();
+    // await _googleSignIn.disconnect();
+    // await FirebaseAuth.instance.signOut();
+    // preferenceClass.removeData(UsersKey.googleUserKey);
+    log("User Sign Out");
+  }
+
+  /// add user contact card
+  Future<void> addContactCard(String subDocumentId, var data) async {
+    await FirebaseServices.addDataToSubCollection(
+        UsersKey.collection, _auth.currentUser?.uid, UsersKey.contacts, data,
+        subDocumentId: subDocumentId);
+  }
+
+  /// get user contacts card
+  /// get subCollection   data from fire store firebase
+  Stream<QuerySnapshot<Object?>>? getContactCardData() {
+    var data = FirebaseServices.fetchSubCollectionData(
+        collectionName: UsersKey.collection,
+        id: _auth.currentUser!.uid,
+        subCollectionName: UsersKey.contacts);
+    return data;
+  }
+
+  /// update subCollection
+  Future<void> updateSubCollectionData(var subDocumentId, var data) async {
+    await FirebaseServices.updateSubCollectionData(UsersKey.collection,
+            _auth.currentUser?.uid, subDocumentId, UsersKey.contacts, data)
+        .then((value) {
+      log("Data has been deleted : $value");
+    });
+  }
+
+  /// share contact
+  void shareContact(var userId) async {
+    final params = {"userId": "$userId"};
+    String link =
+        "https://biz-card-9fa8a.web.app/cardScreen?${Uri(queryParameters: params)}";
+    sharePlus.Share.share(link, subject: 'Share it with');
+  }
+
+  @override
+  void dispose() {
+    super.dispose();
+    nameController.dispose();
+    cardTitleController.dispose();
+    jobTitleController.dispose();
+    companyController.dispose();
+    bioController.dispose();
+    addressController.dispose();
   }
 }
